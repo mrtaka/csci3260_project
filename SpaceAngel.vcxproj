@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{1f86719b-9dd3-43f7-b3b9-17cedf2d46dc}</ProjectGuid>
+    <ProjectGuid>{9ebdd749-7d88-41b2-a88b-4828d321241c}</ProjectGuid>
     <RootNamespace>SpaceAngel</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -131,12 +131,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="FragmentShaderCode.glsl" />
-    <None Include="VertexShaderCode.glsl" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-    <Text Include="tiger_main_only_for_copy.cpp" />
+    <None Include="FragmentShaderCode.glsl" />
+    <None Include="VertexShaderCode.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

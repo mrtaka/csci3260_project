@@ -15,21 +15,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="FragmentShaderCode.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="VertexShaderCode.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="tiger_main_only_for_copy.cpp">
+    <None Include="VertexShaderCode.glsl">
       <Filter>Source Files</Filter>
-    </Text>
+    </None>
+    <None Include="FragmentShaderCode.glsl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
