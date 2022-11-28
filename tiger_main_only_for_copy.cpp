@@ -64,11 +64,11 @@ float pitch = 17.0f;
 float brightness = 0.8f;
 float seconds = 0.0f;
 
-float tigerPosX = 0.0f;
-float tigerPosY = 0.0f;
-float tigerPosZ = 0.0f;
+float spacecraftPosX = 0.0f;
+float spacecraftPosY = 0.0f;
+float spacecraftPosZ = 0.0f;
 const float initialDir = 226.5f;	//Facing Z direction, later maybe change to something else
-float tigerDir;
+float spacecraftDir;
 int tigerHP = 100;
 float invincibleTime;
 
@@ -79,7 +79,7 @@ float heartPosZ[1000];
 bool heartDestroyed[1000];
 
 int theme_ground = 0;
-int theme_tiger = 0;
+int theme_spacecraft = 0;
 
 const int grassNum = 15;
 float grassPosX[grassNum];
@@ -434,9 +434,9 @@ GLuint groundVAO, groundVBO, groundEBO;
 Model groundobj;
 GLuint groundTexture0, groundTexture1;
 
-GLuint tigerVAO, tigerVBO, tigerEBO;
-Model tigerobj;
-GLuint tigerTexture0, tigerTexture1;
+GLuint spacecraftVAO, spacecraftVBO, spacecraftEBO;
+Model spacecraftobj;
+GLuint spacecraftTexture0, spacecraftTexture1;
 
 void object_textured_health_bar() {
 	health_barobj = loadOBJ("resources/health_bar/health_bar.obj");
@@ -920,18 +920,18 @@ void object_textured_sun() {
 	);
 }
 
-void object_textured_tiger() {
-	tigerobj = loadOBJ("resources/tiger/tiger.obj");
-	glGenVertexArrays(1, &tigerVAO);
-	glBindVertexArray(tigerVAO);
+void object_textured_spacecraft() {
+	spacecraftobj = loadOBJ("resources/tiger/tiger.obj");
+	glGenVertexArrays(1, &spacecraftVAO);
+	glBindVertexArray(spacecraftVAO);
 	//Create Vertex Buffer Objects
-	glGenBuffers(1, &tigerVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, tigerVBO);
-	glBufferData(GL_ARRAY_BUFFER, tigerobj.vertices.size() * sizeof(Vertex), &tigerobj.vertices[0], GL_STATIC_DRAW);
+	glGenBuffers(1, &spacecraftVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, spacecraftVBO);
+	glBufferData(GL_ARRAY_BUFFER, spacecraftobj.vertices.size() * sizeof(Vertex), &spacecraftobj.vertices[0], GL_STATIC_DRAW);
 	//Create Element array Buffer Objects
-	glGenBuffers(1, &tigerEBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, tigerEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, tigerobj.indices.size() * sizeof(unsigned int), &tigerobj.indices[0], GL_STATIC_DRAW);
+	glGenBuffers(1, &spacecraftEBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, spacecraftEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, spacecraftobj.indices.size() * sizeof(unsigned int), &spacecraftobj.indices[0], GL_STATIC_DRAW);
 	// 1st attribute buffer : position
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(
@@ -951,8 +951,8 @@ void object_textured_tiger() {
 		sizeof(Vertex), // stride
 		(void*)offsetof(Vertex, uv) // array buffer offset
 	);
-	tigerTexture0 = loadTexture("resources/tiger/tiger_01.jpg");
-	tigerTexture1 = loadTexture("resources/tiger/tiger_02.jpg");
+	spacecraftTexture0 = loadTexture("resources/tiger/tiger_01.jpg");
+	spacecraftTexture1 = loadTexture("resources/tiger/tiger_02.jpg");
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(
 		2, // attribute
@@ -1012,7 +1012,7 @@ void sendDataToOpenGL()
 {
 	//Load textures
 	object_textured_ground();
-	object_textured_tiger();
+	object_textured_spacecraft();
 	object_textured_sun();
 	object_textured_moon();
 	object_textured_grass();
@@ -1059,8 +1059,8 @@ void create_object(string obj, float x /*offset*/, float y /*offset*/, float z /
 		camZ = -20.0 * cos(glm::radians(pitch * mouseSensitivity)) * sin(glm::radians(yaw * mouseSensitivity));
 
 		if (snapCamera and movementDetected and !autoMouse) {
-			camX = -20.0 * cos(glm::radians(tigerDir - 136.5f));
-			camZ = 20.0 * sin(glm::radians(tigerDir - 136.5f));
+			camX = -20.0 * cos(glm::radians(spacecraftDir - 136.5f));
+			camZ = 20.0 * sin(glm::radians(spacecraftDir - 136.5f));
 		}
 		/*
 		const float radius = 10.0f;
@@ -1069,7 +1069,7 @@ void create_object(string obj, float x /*offset*/, float y /*offset*/, float z /
 		camZ = camera_pos_z * sin(glm::radians(mouseY * 0.01f * mouseSensitivity + 90.0f));
 		*/
 		glm::mat4 view;
-		viewMatrix = glm::lookAt(glm::vec3(camX + tigerPosX, camY + tigerPosY, camZ + tigerPosZ), glm::vec3(+tigerPosX, +tigerPosY, +tigerPosZ), glm::vec3(0.0, 1.0, 0.0));
+		viewMatrix = glm::lookAt(glm::vec3(camX + spacecraftPosX, camY + spacecraftPosY, camZ + spacecraftPosZ), glm::vec3(+spacecraftPosX, +spacecraftPosY, +spacecraftPosZ), glm::vec3(0.0, 1.0, 0.0));
 	}
 
 	if (obj == "ground") {
@@ -1083,9 +1083,9 @@ void create_object(string obj, float x /*offset*/, float y /*offset*/, float z /
 		}
 	}
 	if (obj == "tiger") {
-		trans = glm::translate(glm::mat4(1.0f), glm::vec3(x + 0.8f * cos(glm::radians(tigerDir - 136.5f)), y + 0.2f, z + 0.8f * -sin(glm::radians(tigerDir - 136.5f))));
+		trans = glm::translate(glm::mat4(1.0f), glm::vec3(x + 0.8f * cos(glm::radians(spacecraftDir - 136.5f)), y + 0.2f, z + 0.8f * -sin(glm::radians(spacecraftDir - 136.5f))));
 		trans = glm::scale(trans, glm::vec3(4.0f, 4.0f, 4.0f));
-		trans = glm::rotate(trans, glm::radians(tigerDir), glm::vec3(0.0f, 1.0f, 0.0f));
+		trans = glm::rotate(trans, glm::radians(spacecraftDir), glm::vec3(0.0f, 1.0f, 0.0f));
 
 		//	tigerPosX += 0.9f * cos(glm::radians(tigerDir - 136.5f));
 		//	tigerPosZ += -0.9f * sin(glm::radians(tigerDir - 136.5f));
@@ -1369,13 +1369,13 @@ void paintGL(void)
 	int invert = 0;
 	for (int i = -4; i < 5; i++) {
 		for (int j = -4; j < 5; j++) {
-			if ((((int)tigerPosX / 60) + ((int)tigerPosZ / 48) + i + j) % 2 == 0)
+			if ((((int)spacecraftPosX / 60) + ((int)spacecraftPosZ / 48) + i + j) % 2 == 0)
 				invert = 0;
 			else
 				invert = 1;
-			create_set_of_random_grass(((float)i + ((int)tigerPosX / 60)) * 60.0f, 0.0f, ((float)j + ((int)tigerPosZ / 48)) * 48.0f, invert);
-			create_set_of_random_bushes(((float)i + ((int)tigerPosX / 60)) * 60.0f, 0.0f, ((float)j + ((int)tigerPosZ / 48)) * 48.0f, invert);
-			create_set_of_random_mud(((float)i + ((int)tigerPosX / 60)) * 60.0f, 0.0f, ((float)j + ((int)tigerPosZ / 48)) * 48.0f, invert);
+			create_set_of_random_grass(((float)i + ((int)spacecraftPosX / 60)) * 60.0f, 0.0f, ((float)j + ((int)spacecraftPosZ / 48)) * 48.0f, invert);
+			create_set_of_random_bushes(((float)i + ((int)spacecraftPosX / 60)) * 60.0f, 0.0f, ((float)j + ((int)spacecraftPosZ / 48)) * 48.0f, invert);
+			create_set_of_random_mud(((float)i + ((int)spacecraftPosX / 60)) * 60.0f, 0.0f, ((float)j + ((int)spacecraftPosZ / 48)) * 48.0f, invert);
 		}
 	}
 
@@ -1385,7 +1385,7 @@ void paintGL(void)
 	for (int i = 0; i < heartNum; i++) {
 		//Check if Collecting Hearts
 		if (!heartDestroyed[i]) {
-			float distance = sqrt(pow((heartPosZ[i] - tigerPosZ), 2) + pow((heartPosX[i] - tigerPosX), 2));
+			float distance = sqrt(pow((heartPosZ[i] - spacecraftPosZ), 2) + pow((heartPosX[i] - spacecraftPosX), 2));
 			if (distance < 4.0f) {
 				heartDestroyed[i] = true;
 				tigerHP += 10;
@@ -1452,12 +1452,12 @@ void paintGL(void)
 		//Tiger Dash Motion
 
 		if ((seconds - tigerEnergyTime) < 0.2) {
-			tigerPosX += 2.7f * cos(glm::radians(tigerDir - 136.5f));
-			tigerPosY = sin(glm::radians((seconds - tigerEnergyTime) * 900)) * 2.3f;
-			tigerPosZ += -2.7f * sin(glm::radians(tigerDir - 136.5f));
+			spacecraftPosX += 2.7f * cos(glm::radians(spacecraftDir - 136.5f));
+			spacecraftPosY = sin(glm::radians((seconds - tigerEnergyTime) * 900)) * 2.3f;
+			spacecraftPosZ += -2.7f * sin(glm::radians(spacecraftDir - 136.5f));
 		}
 		else {
-			tigerPosY = 0.0f;
+			spacecraftPosY = 0.0f;
 			tigerDash = false;
 		}
 	}
@@ -1490,9 +1490,9 @@ void paintGL(void)
 					glm::vec2 vector_towards_tiger;
 					float distance;
 					float angle;
-					distance = sqrt(pow((wolfPosZ[i] - tigerPosZ), 2) + pow((wolfPosX[i] - tigerPosX), 2));
+					distance = sqrt(pow((wolfPosZ[i] - spacecraftPosZ), 2) + pow((wolfPosX[i] - spacecraftPosX), 2));
 					//distance = glm::distance(glm::vec2(wolfPosX[i], wolfPosZ[i]), glm::vec2(tigerPosX, tigerPosZ));
-					vector_towards_tiger = glm::normalize(glm::vec2(tigerPosX, tigerPosZ) - glm::vec2(wolfPosX[i], wolfPosZ[i]));
+					vector_towards_tiger = glm::normalize(glm::vec2(spacecraftPosX, spacecraftPosZ) - glm::vec2(wolfPosX[i], wolfPosZ[i]));
 					angle = atan2(-vector_towards_tiger.y, vector_towards_tiger.x) + glm::radians(90.0f);
 
 					//Check if damaging tiger
@@ -1673,7 +1673,7 @@ void paintGL(void)
 	//Creating Pseudo Infinitely Looping Ground
 	for (int i = -4; i < 5; i++) {
 		for (int j = -4; j < 5; j++) {
-			create_object("ground", (float)i * 60 + ((int)tigerPosX / 60) * 60, 0.0f, (float)j * 48 + ((int)tigerPosZ / 48) * 48, 0, 0, 0.0f, 0.0f);
+			create_object("ground", (float)i * 60 + ((int)spacecraftPosX / 60) * 60, 0.0f, (float)j * 48 + ((int)spacecraftPosZ / 48) * 48, 0, 0, 0.0f, 0.0f);
 			glBindVertexArray(groundVAO);
 			if (theme_ground == 0)
 				glBindTexture(GL_TEXTURE_2D, groundTexture0);
@@ -1703,13 +1703,13 @@ void paintGL(void)
 
 	/////////////
 
-	create_object("tiger", tigerPosX, tigerPosY, tigerPosZ, 0, 0, 0.0f, 0.0f);
-	glBindVertexArray(tigerVAO);
-	if (theme_tiger == 0)
-		glBindTexture(GL_TEXTURE_2D, tigerTexture0);
-	if (theme_tiger == 1)
-		glBindTexture(GL_TEXTURE_2D, tigerTexture1);
-	glDrawElements(GL_TRIANGLES, tigerobj.indices.size(), GL_UNSIGNED_INT, 0);
+	create_object("tiger", spacecraftPosX, spacecraftPosY, spacecraftPosZ, 0, 0, 0.0f, 0.0f);
+	glBindVertexArray(spacecraftVAO);
+	if (theme_spacecraft == 0)
+		glBindTexture(GL_TEXTURE_2D, spacecraftTexture0);
+	if (theme_spacecraft == 1)
+		glBindTexture(GL_TEXTURE_2D, spacecraftTexture1);
+	glDrawElements(GL_TRIANGLES, spacecraftobj.indices.size(), GL_UNSIGNED_INT, 0);
 
 
 	//Lights
@@ -1721,7 +1721,7 @@ void paintGL(void)
 
 	GLint eyePositionUniformLocation =
 		glGetUniformLocation(programID, "eyePositionWorld");
-	vec3 eyePosition(camX + tigerPosX, camY + tigerPosY, camZ + tigerPosZ);
+	vec3 eyePosition(camX + spacecraftPosX, camY + spacecraftPosY, camZ + spacecraftPosZ);
 	glUniform3fv(eyePositionUniformLocation, 1, &eyePosition[0]);
 
 	//	SUN
@@ -1801,10 +1801,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 void initialize_game() {
 	glfwSetTime(0.0f);
 	updateTime = 0.0f;
-	tigerPosX = 0.0f;
-	tigerPosY = 0.0f;
-	tigerPosZ = 0.0f;
-	tigerDir = initialDir;
+	spacecraftPosX = 0.0f;
+	spacecraftPosY = 0.0f;
+	spacecraftPosZ = 0.0f;
+	spacecraftDir = initialDir;
 	tigerEnergyTime = -0.5f;
 	tigerDash = false;
 	invincibleTime = 5.0f;
@@ -2122,10 +2122,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 	if (!paused) {
 		if (key == GLFW_KEY_1 && action == GLFW_PRESS) {
-			theme_tiger = 0;
+			theme_spacecraft = 0;
 		}
 		if (key == GLFW_KEY_2 && action == GLFW_PRESS) {
-			theme_tiger = 1;
+			theme_spacecraft = 1;
 		}
 		if (key == GLFW_KEY_3 && action == GLFW_PRESS) {
 			theme_ground = 0;
@@ -2140,9 +2140,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			mt19937 rng(dev());
 			uniform_int_distribution<int> rnd_spd(-5, 5);
 			uniform_int_distribution<int> rnd_rot(-180, 180);
-			tigerDir = rnd_rot(rng);
-			tigerPosX += rnd_spd(rng) * 1.3f * cos(glm::radians(tigerDir - 136.5f));
-			tigerPosZ += rnd_spd(rng) * 1.3f * sin(glm::radians(tigerDir - 136.5f));
+			spacecraftDir = rnd_rot(rng);
+			spacecraftPosX += rnd_spd(rng) * 1.3f * cos(glm::radians(spacecraftDir - 136.5f));
+			spacecraftPosZ += rnd_spd(rng) * 1.3f * sin(glm::radians(spacecraftDir - 136.5f));
 		}
 
 
@@ -2172,38 +2172,38 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 		//Tiger Normal Motion
 		if (!tigerDash && (key == GLFW_KEY_UP || (wasdMovements && key == GLFW_KEY_W)) && action == GLFW_PRESS) {
-			tigerPosX += 0.9f * cos(glm::radians(tigerDir - 136.5f));
-			tigerPosZ += -0.9f * sin(glm::radians(tigerDir - 136.5f));
+			spacecraftPosX += 0.9f * cos(glm::radians(spacecraftDir - 136.5f));
+			spacecraftPosZ += -0.9f * sin(glm::radians(spacecraftDir - 136.5f));
 			movementDetected = true;
 		}
 		if (!tigerDash && (key == GLFW_KEY_DOWN || (wasdMovements && key == GLFW_KEY_S)) && action == GLFW_PRESS) {
-			tigerPosX += -0.5f * cos(glm::radians(tigerDir - 136.5f));
-			tigerPosZ += 0.5f * sin(glm::radians(tigerDir - 136.5f));
+			spacecraftPosX += -0.5f * cos(glm::radians(spacecraftDir - 136.5f));
+			spacecraftPosZ += 0.5f * sin(glm::radians(spacecraftDir - 136.5f));
 			movementDetected = true;
 		}
 		if (!tigerDash && (key == GLFW_KEY_LEFT || (wasdMovements && key == GLFW_KEY_A)) && action == GLFW_PRESS) {
-			tigerDir += 5.0f;
+			spacecraftDir += 5.0f;
 		}
 		if (!tigerDash && (key == GLFW_KEY_RIGHT || (wasdMovements && key == GLFW_KEY_D)) && action == GLFW_PRESS) {
-			tigerDir -= 5.0f;
+			spacecraftDir -= 5.0f;
 		}
 		//	REPEAT
 
 		if (!tigerDash && (key == GLFW_KEY_UP || (wasdMovements && key == GLFW_KEY_W)) && action == GLFW_REPEAT) {
-			tigerPosX += 1.8f * cos(glm::radians(tigerDir - 136.5f));
-			tigerPosZ += -1.8f * sin(glm::radians(tigerDir - 136.5f));
+			spacecraftPosX += 1.8f * cos(glm::radians(spacecraftDir - 136.5f));
+			spacecraftPosZ += -1.8f * sin(glm::radians(spacecraftDir - 136.5f));
 			movementDetected = true;
 		}
 		if (!tigerDash && (key == GLFW_KEY_DOWN || (wasdMovements && key == GLFW_KEY_S)) && action == GLFW_REPEAT) {
-			tigerPosX += -1.0f * cos(glm::radians(tigerDir - 136.5f));
-			tigerPosZ += 1.0f * sin(glm::radians(tigerDir - 136.5f));
+			spacecraftPosX += -1.0f * cos(glm::radians(spacecraftDir - 136.5f));
+			spacecraftPosZ += 1.0f * sin(glm::radians(spacecraftDir - 136.5f));
 			movementDetected = true;
 		}
 		if (!tigerDash && (key == GLFW_KEY_LEFT || (wasdMovements && key == GLFW_KEY_A)) && action == GLFW_REPEAT) {
-			tigerDir += 5.0f;
+			spacecraftDir += 5.0f;
 		}
 		if (!tigerDash && (key == GLFW_KEY_RIGHT || (wasdMovements && key == GLFW_KEY_D)) && action == GLFW_REPEAT) {
-			tigerDir -= 5.0f;
+			spacecraftDir -= 5.0f;
 		}
 	}
 

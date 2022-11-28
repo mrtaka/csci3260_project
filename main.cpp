@@ -66,11 +66,11 @@ float pitch = 17.0f;
 float brightness = 0.8f;
 float seconds = 0.0f;
 
-float tigerPosX = 0.0f;
-float tigerPosY = 0.0f;
-float tigerPosZ = 0.0f;
-const float initialDir = 226.5f;	//Facing Z direction, later maybe change to something else
-float tigerDir;
+float spacecraftPosX = 0.0f;
+float spacecraftPosY = 0.0f;
+float spacecraftPosZ = 0.0f;
+const float initialDir = 0.0f;	//Facing Z direction, later maybe change to something else
+float spacecraftDir;
 int tigerHP = 100;
 float invincibleTime;
 
@@ -81,7 +81,7 @@ float heartPosZ[1000];
 bool heartDestroyed[1000];
 
 int theme_ground = 0;
-int theme_tiger = 0;
+int theme_spacecraft = 0;
 
 const int grassNum = 15;
 float grassPosX[grassNum];
@@ -412,33 +412,13 @@ GLuint wolfVAO, wolfVBO, wolfEBO;
 Model wolfobj;
 GLuint wolfTexture0, wolfTexture1;
 
-GLuint mudVAO, mudVBO, mudEBO;
-Model mudobj;
-GLuint mudTexture0;
-
-GLuint bushVAO, bushVBO, bushEBO;
-Model bushobj;
-GLuint bushTexture0;
-
-GLuint grassVAO, grassVBO, grassEBO;
-Model grassobj;
-GLuint grassTexture0;
-
-GLuint moonVAO, moonVBO, moonEBO;
-Model moonobj;
-GLuint moonTexture0;
-
-GLuint sunVAO, sunVBO, sunEBO;
-Model sunobj;
-GLuint sunTexture0;
-
 GLuint groundVAO, groundVBO, groundEBO;
 Model groundobj;
 GLuint groundTexture0, groundTexture1;
 
-GLuint tigerVAO, tigerVBO, tigerEBO;
-Model tigerobj;
-GLuint tigerTexture0, tigerTexture1;
+GLuint spacecraftVAO, spacecraftVBO, spacecraftEBO;
+Model spacecraftobj;
+GLuint spacecraftTexture0, spacecraftTexture1;
 
 void object_textured_health_bar() {
 	health_barobj = loadOBJ("resources/health_bar/health_bar.obj");
@@ -707,18 +687,18 @@ void object_textured_wolf() {
 	);
 }
 
-void object_textured_mud() {
-	mudobj = loadOBJ("resources/mud/mud.obj");
-	glGenVertexArrays(1, &mudVAO);
-	glBindVertexArray(mudVAO);
+void object_textured_spacecraft() {
+	spacecraftobj = loadOBJ("resources/spacecraft/spacecraft.obj");
+	glGenVertexArrays(1, &spacecraftVAO);
+	glBindVertexArray(spacecraftVAO);
 	//Create Vertex Buffer Objects
-	glGenBuffers(1, &mudVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, mudVBO);
-	glBufferData(GL_ARRAY_BUFFER, mudobj.vertices.size() * sizeof(Vertex), &mudobj.vertices[0], GL_STATIC_DRAW);
+	glGenBuffers(1, &spacecraftVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, spacecraftVBO);
+	glBufferData(GL_ARRAY_BUFFER, spacecraftobj.vertices.size() * sizeof(Vertex), &spacecraftobj.vertices[0], GL_STATIC_DRAW);
 	//Create Element array Buffer Objects
-	glGenBuffers(1, &mudEBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mudEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, mudobj.indices.size() * sizeof(unsigned int), &mudobj.indices[0], GL_STATIC_DRAW);
+	glGenBuffers(1, &spacecraftEBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, spacecraftEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, spacecraftobj.indices.size() * sizeof(unsigned int), &spacecraftobj.indices[0], GL_STATIC_DRAW);
 	// 1st attribute buffer : position
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(
@@ -738,223 +718,8 @@ void object_textured_mud() {
 		sizeof(Vertex), // stride
 		(void*)offsetof(Vertex, uv) // array buffer offset
 	);
-	mudTexture0 = loadTexture("resources/mud/mud_01.jpg");
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(
-		2, // attribute
-		3, // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		sizeof(Vertex), // stride
-		(void*)offsetof(Vertex, normal) // array buffer offset
-	);
-}
-
-void object_textured_bush() {
-	bushobj = loadOBJ("resources/bush/bush.obj");
-	glGenVertexArrays(1, &bushVAO);
-	glBindVertexArray(bushVAO);
-	//Create Vertex Buffer Objects
-	glGenBuffers(1, &bushVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, bushVBO);
-	glBufferData(GL_ARRAY_BUFFER, bushobj.vertices.size() * sizeof(Vertex), &bushobj.vertices[0], GL_STATIC_DRAW);
-	//Create Element array Buffer Objects
-	glGenBuffers(1, &bushEBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bushEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, bushobj.indices.size() * sizeof(unsigned int), &bushobj.indices[0], GL_STATIC_DRAW);
-	// 1st attribute buffer : position
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(
-		0, // attribute
-		3, // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		sizeof(Vertex), // stride
-		(void*)offsetof(Vertex, position) // array buffer offset
-	);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(
-		1, // attribute
-		2, // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		sizeof(Vertex), // stride
-		(void*)offsetof(Vertex, uv) // array buffer offset
-	);
-	bushTexture0 = loadTexture("resources/bush/bush_01.jpg");
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(
-		2, // attribute
-		3, // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		sizeof(Vertex), // stride
-		(void*)offsetof(Vertex, normal) // array buffer offset
-	);
-}
-
-void object_textured_grass() {
-	grassobj = loadOBJ("resources/grass/grass.obj");
-	glGenVertexArrays(1, &grassVAO);
-	glBindVertexArray(grassVAO);
-	//Create Vertex Buffer Objects
-	glGenBuffers(1, &grassVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, grassVBO);
-	glBufferData(GL_ARRAY_BUFFER, grassobj.vertices.size() * sizeof(Vertex), &grassobj.vertices[0], GL_STATIC_DRAW);
-	//Create Element array Buffer Objects
-	glGenBuffers(1, &grassEBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, grassEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, grassobj.indices.size() * sizeof(unsigned int), &grassobj.indices[0], GL_STATIC_DRAW);
-	// 1st attribute buffer : position
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(
-		0, // attribute
-		3, // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		sizeof(Vertex), // stride
-		(void*)offsetof(Vertex, position) // array buffer offset
-	);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(
-		1, // attribute
-		2, // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		sizeof(Vertex), // stride
-		(void*)offsetof(Vertex, uv) // array buffer offset
-	);
-	grassTexture0 = loadTexture("resources/grass/grass_01.jpg");
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(
-		2, // attribute
-		3, // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		sizeof(Vertex), // stride
-		(void*)offsetof(Vertex, normal) // array buffer offset
-	);
-}
-
-void object_textured_moon() {
-	moonobj = loadOBJ("resources/moon/moon.obj");
-	glGenVertexArrays(1, &moonVAO);
-	glBindVertexArray(moonVAO);
-	//Create Vertex Buffer Objects
-	glGenBuffers(1, &moonVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, moonVBO);
-	glBufferData(GL_ARRAY_BUFFER, moonobj.vertices.size() * sizeof(Vertex), &moonobj.vertices[0], GL_STATIC_DRAW);
-	//Create Element array Buffer Objects
-	glGenBuffers(1, &moonEBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, moonEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, moonobj.indices.size() * sizeof(unsigned int), &moonobj.indices[0], GL_STATIC_DRAW);
-	// 1st attribute buffer : position
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(
-		0, // attribute
-		3, // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		sizeof(Vertex), // stride
-		(void*)offsetof(Vertex, position) // array buffer offset
-	);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(
-		1, // attribute
-		2, // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		sizeof(Vertex), // stride
-		(void*)offsetof(Vertex, uv) // array buffer offset
-	);
-	moonTexture0 = loadTexture("resources/moon/moon_01.jpg");
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(
-		2, // attribute
-		3, // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		sizeof(Vertex), // stride
-		(void*)offsetof(Vertex, normal) // array buffer offset
-	);
-}
-
-void object_textured_sun() {
-	sunobj = loadOBJ("resources/sun/sun.obj");
-	glGenVertexArrays(1, &sunVAO);
-	glBindVertexArray(sunVAO);
-	//Create Vertex Buffer Objects
-	glGenBuffers(1, &sunVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, sunVBO);
-	glBufferData(GL_ARRAY_BUFFER, sunobj.vertices.size() * sizeof(Vertex), &sunobj.vertices[0], GL_STATIC_DRAW);
-	//Create Element array Buffer Objects
-	glGenBuffers(1, &sunEBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sunEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sunobj.indices.size() * sizeof(unsigned int), &sunobj.indices[0], GL_STATIC_DRAW);
-	// 1st attribute buffer : position
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(
-		0, // attribute
-		3, // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		sizeof(Vertex), // stride
-		(void*)offsetof(Vertex, position) // array buffer offset
-	);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(
-		1, // attribute
-		2, // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		sizeof(Vertex), // stride
-		(void*)offsetof(Vertex, uv) // array buffer offset
-	);
-	sunTexture0 = loadTexture("resources/sun/sun_01.jpg");
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(
-		2, // attribute
-		3, // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		sizeof(Vertex), // stride
-		(void*)offsetof(Vertex, normal) // array buffer offset
-	);
-}
-
-void object_textured_tiger() {
-	tigerobj = loadOBJ("resources/tiger/tiger.obj");
-	glGenVertexArrays(1, &tigerVAO);
-	glBindVertexArray(tigerVAO);
-	//Create Vertex Buffer Objects
-	glGenBuffers(1, &tigerVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, tigerVBO);
-	glBufferData(GL_ARRAY_BUFFER, tigerobj.vertices.size() * sizeof(Vertex), &tigerobj.vertices[0], GL_STATIC_DRAW);
-	//Create Element array Buffer Objects
-	glGenBuffers(1, &tigerEBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, tigerEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, tigerobj.indices.size() * sizeof(unsigned int), &tigerobj.indices[0], GL_STATIC_DRAW);
-	// 1st attribute buffer : position
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(
-		0, // attribute
-		3, // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		sizeof(Vertex), // stride
-		(void*)offsetof(Vertex, position) // array buffer offset
-	);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(
-		1, // attribute
-		2, // size
-		GL_FLOAT, // type
-		GL_FALSE, // normalized?
-		sizeof(Vertex), // stride
-		(void*)offsetof(Vertex, uv) // array buffer offset
-	);
-	tigerTexture0 = loadTexture("resources/tiger/tiger_01.jpg");
-	tigerTexture1 = loadTexture("resources/tiger/tiger_02.jpg");
+	spacecraftTexture0 = loadTexture("resources/spacecraft/spacecraft_01.jpg");
+	spacecraftTexture1 = loadTexture("resources/spacecraft/spacecraft_02.jpg");
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(
 		2, // attribute
@@ -1014,12 +779,7 @@ void sendDataToOpenGL()
 {
 	//Load textures
 	object_textured_ground();
-	object_textured_tiger();
-	object_textured_sun();
-	object_textured_moon();
-	object_textured_grass();
-	object_textured_bush();
-	object_textured_mud();
+	object_textured_spacecraft();
 	object_textured_wolf();
 	object_textured_button();
 	object_textured_heart();
@@ -1061,8 +821,8 @@ void create_object(string obj, float x /*offset*/, float y /*offset*/, float z /
 		camZ = -20.0 * cos(glm::radians(pitch * mouseSensitivity)) * sin(glm::radians(yaw * mouseSensitivity));
 
 		if (snapCamera and movementDetected and !autoMouse) {
-			camX = -20.0 * cos(glm::radians(tigerDir - 136.5f));
-			camZ = 20.0 * sin(glm::radians(tigerDir - 136.5f));
+			camX = -20.0 * cos(glm::radians(spacecraftDir + 90.0f));
+			camZ = 20.0 * sin(glm::radians(spacecraftDir + 90.0f));
 		}
 		/*
 		const float radius = 10.0f;
@@ -1071,7 +831,7 @@ void create_object(string obj, float x /*offset*/, float y /*offset*/, float z /
 		camZ = camera_pos_z * sin(glm::radians(mouseY * 0.01f * mouseSensitivity + 90.0f));
 		*/
 		glm::mat4 view;
-		viewMatrix = glm::lookAt(glm::vec3(camX + tigerPosX, camY + tigerPosY, camZ + tigerPosZ), glm::vec3(+tigerPosX, +tigerPosY, +tigerPosZ), glm::vec3(0.0, 1.0, 0.0));
+		viewMatrix = glm::lookAt(glm::vec3(camX + spacecraftPosX, camY + spacecraftPosY, camZ + spacecraftPosZ), glm::vec3(+spacecraftPosX, +spacecraftPosY, +spacecraftPosZ), glm::vec3(0.0, 1.0, 0.0));
 	}
 
 	if (obj == "ground") {
@@ -1084,10 +844,10 @@ void create_object(string obj, float x /*offset*/, float y /*offset*/, float z /
 			trans = glm::scale(trans, glm::vec3(0.0f, 0.0f, 0.0f));
 		}
 	}
-	if (obj == "tiger") {
-		trans = glm::translate(glm::mat4(1.0f), glm::vec3(x + 0.8f * cos(glm::radians(tigerDir - 136.5f)), y + 0.2f, z + 0.8f * -sin(glm::radians(tigerDir - 136.5f))));
-		trans = glm::scale(trans, glm::vec3(4.0f, 4.0f, 4.0f));
-		trans = glm::rotate(trans, glm::radians(tigerDir), glm::vec3(0.0f, 1.0f, 0.0f));
+	if (obj == "spacecraft") {
+		trans = glm::translate(glm::mat4(1.0f), glm::vec3(x + 0.8f * cos(glm::radians(spacecraftDir)), y + 0.2f, z + 0.8f * -sin(glm::radians(spacecraftDir))));
+		trans = glm::scale(trans, glm::vec3(0.01f, 0.01f, 0.01f));
+		trans = glm::rotate(trans, glm::radians(spacecraftDir), glm::vec3(0.0f, 1.0f, 0.0f));
 
 		//	tigerPosX += 0.9f * cos(glm::radians(tigerDir - 136.5f));
 		//	tigerPosZ += -0.9f * sin(glm::radians(tigerDir - 136.5f));
@@ -1270,6 +1030,8 @@ void initializedGL(void) //run only once
 	glEnable(GL_CULL_FACE);
 }
 
+//Repeating Objects Repeats
+/*
 void create_grass_pile(float x, float y, float z) {
 	create_object("grass", x, y, z, 0, 0, 0.0f, 0.0f);
 	glBindVertexArray(grassVAO);
@@ -1336,6 +1098,7 @@ void create_set_of_random_mud(float x, float y, float z, int invert) {
 			glDrawElements(GL_TRIANGLES, mudobj.indices.size(), GL_UNSIGNED_INT, 0);
 		}
 }
+*/
 
 void paintGL(void)
 {
@@ -1353,6 +1116,7 @@ void paintGL(void)
 	else
 		glClearColor(skyColor.x / 4, skyColor.y / 4, skyColor.z / 4, skyColor.w);
 
+	glClearColor(0.8, 0.8, 0.95, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	if (paused)
@@ -1371,13 +1135,15 @@ void paintGL(void)
 	int invert = 0;
 	for (int i = -4; i < 5; i++) {
 		for (int j = -4; j < 5; j++) {
-			if ((((int)tigerPosX / 60) + ((int)tigerPosZ / 48) + i + j) % 2 == 0)
+			if ((((int)spacecraftPosX / 60) + ((int)spacecraftPosZ / 48) + i + j) % 2 == 0)
 				invert = 0;
 			else
 				invert = 1;
+			/*
 			create_set_of_random_grass(((float)i + ((int)tigerPosX / 60)) * 60.0f, 0.0f, ((float)j + ((int)tigerPosZ / 48)) * 48.0f, invert);
 			create_set_of_random_bushes(((float)i + ((int)tigerPosX / 60)) * 60.0f, 0.0f, ((float)j + ((int)tigerPosZ / 48)) * 48.0f, invert);
 			create_set_of_random_mud(((float)i + ((int)tigerPosX / 60)) * 60.0f, 0.0f, ((float)j + ((int)tigerPosZ / 48)) * 48.0f, invert);
+			*/
 		}
 	}
 
@@ -1387,7 +1153,7 @@ void paintGL(void)
 	for (int i = 0; i < heartNum; i++) {
 		//Check if Collecting Hearts
 		if (!heartDestroyed[i]) {
-			float distance = sqrt(pow((heartPosZ[i] - tigerPosZ), 2) + pow((heartPosX[i] - tigerPosX), 2));
+			float distance = sqrt(pow((heartPosZ[i] - spacecraftPosZ), 2) + pow((heartPosX[i] - spacecraftPosX), 2));
 			if (distance < 4.0f) {
 				heartDestroyed[i] = true;
 				tigerHP += 10;
@@ -1454,12 +1220,12 @@ void paintGL(void)
 		//Tiger Dash Motion
 
 		if ((seconds - tigerEnergyTime) < 0.2) {
-			tigerPosX += 2.7f * cos(glm::radians(tigerDir - 136.5f));
-			tigerPosY = sin(glm::radians((seconds - tigerEnergyTime) * 900)) * 2.3f;
-			tigerPosZ += -2.7f * sin(glm::radians(tigerDir - 136.5f));
+			spacecraftPosX += 2.7f * cos(glm::radians(spacecraftDir + 90.0f));
+			spacecraftPosY = sin(glm::radians((seconds - tigerEnergyTime) * 900)) * 2.3f;
+			spacecraftPosZ += -2.7f * sin(glm::radians(spacecraftDir + 90.0f));
 		}
 		else {
-			tigerPosY = 0.0f;
+			spacecraftPosY = 0.0f;
 			tigerDash = false;
 		}
 	}
@@ -1492,9 +1258,9 @@ void paintGL(void)
 					glm::vec2 vector_towards_tiger;
 					float distance;
 					float angle;
-					distance = sqrt(pow((wolfPosZ[i] - tigerPosZ), 2) + pow((wolfPosX[i] - tigerPosX), 2));
+					distance = sqrt(pow((wolfPosZ[i] - spacecraftPosZ), 2) + pow((wolfPosX[i] - spacecraftPosX), 2));
 					//distance = glm::distance(glm::vec2(wolfPosX[i], wolfPosZ[i]), glm::vec2(tigerPosX, tigerPosZ));
-					vector_towards_tiger = glm::normalize(glm::vec2(tigerPosX, tigerPosZ) - glm::vec2(wolfPosX[i], wolfPosZ[i]));
+					vector_towards_tiger = glm::normalize(glm::vec2(spacecraftPosX, spacecraftPosZ) - glm::vec2(wolfPosX[i], wolfPosZ[i]));
 					angle = atan2(-vector_towards_tiger.y, vector_towards_tiger.x) + glm::radians(90.0f);
 
 					//Check if damaging tiger
@@ -1603,7 +1369,7 @@ void paintGL(void)
 			glDrawElements(GL_TRIANGLES, wolfobj.indices.size(), GL_UNSIGNED_INT, 0);
 		}
 	}
-
+	/*
 	create_object("moon", 0.0f, 0.0f, 0.0f, 0, 0, 0.0f, 0.0f);
 	glBindVertexArray(moonVAO);
 	glBindTexture(GL_TEXTURE_2D, moonTexture0);
@@ -1613,28 +1379,14 @@ void paintGL(void)
 	glBindVertexArray(sunVAO);
 	glBindTexture(GL_TEXTURE_2D, sunTexture0);
 	glDrawElements(GL_TRIANGLES, sunobj.indices.size(), GL_UNSIGNED_INT, 0);
-
+	*/
 
 	//Display Health and Energy
-
-	/*
-	create_object("bar_background", -0.4f, 0.9f, 0.0f, 0, 0, 0.0f, 0.0f);
-	glBindVertexArray(bar_backgroundVAO);
-	glBindTexture(GL_TEXTURE_2D, bar_backgroundTexture0);
-	glDrawElements(GL_TRIANGLES, bar_backgroundobj.indices.size(), GL_UNSIGNED_INT, 0);
-	*/
 
 	create_object("health_bar", -0.4f, 0.9f, 0.0f, 0, 0, (float)(tigerHP) / 100.0f, 0.0f);
 	glBindVertexArray(health_barVAO);
 	glBindTexture(GL_TEXTURE_2D, health_barTexture0);
 	glDrawElements(GL_TRIANGLES, health_barobj.indices.size(), GL_UNSIGNED_INT, 0);
-
-	/*
-	create_object("bar_background", -0.4f, 0.8f, 0.0f, 0, 0, 0.0f, 0.0f);
-	glBindVertexArray(bar_backgroundVAO);
-	glBindTexture(GL_TEXTURE_2D, bar_backgroundTexture0);
-	glDrawElements(GL_TRIANGLES, bar_backgroundobj.indices.size(), GL_UNSIGNED_INT, 0);
-	*/
 
 	create_object("energy_bar", -0.4f, 0.8f, 0.0f, 0, 0, glm::clamp(seconds - tigerEnergyTime, 0.0f, 1.0f), 0.0f);
 	glBindVertexArray(energy_barVAO);
@@ -1672,6 +1424,7 @@ void paintGL(void)
 		glDrawElements(GL_TRIANGLES, buttonobj.indices.size(), GL_UNSIGNED_INT, 0);
 	}
 
+	/*
 	//Creating Pseudo Infinitely Looping Ground
 	for (int i = -4; i < 5; i++) {
 		for (int j = -4; j < 5; j++) {
@@ -1684,10 +1437,8 @@ void paintGL(void)
 			glDrawElements(GL_TRIANGLES, groundobj.indices.size(), GL_UNSIGNED_INT, 0);
 		}
 	}
-
-	//1 tile of ground
+	*/
 	/*
-	create_object("ground", 0.0f, 0.0f, 0.0f, 0, 0);
 	glBindVertexArray(groundVAO);
 	if (theme_ground == 0)
 		glBindTexture(GL_TEXTURE_2D, groundTexture0);
@@ -1695,23 +1446,15 @@ void paintGL(void)
 		glBindTexture(GL_TEXTURE_2D, groundTexture1);
 	glDrawElements(GL_TRIANGLES, groundobj.indices.size(), GL_UNSIGNED_INT, 0);
 	*/
-
-	glBindVertexArray(groundVAO);
-	if (theme_ground == 0)
-		glBindTexture(GL_TEXTURE_2D, groundTexture0);
-	if (theme_ground == 1)
-		glBindTexture(GL_TEXTURE_2D, groundTexture1);
-	glDrawElements(GL_TRIANGLES, groundobj.indices.size(), GL_UNSIGNED_INT, 0);
-
 	/////////////
 
-	create_object("tiger", tigerPosX, tigerPosY, tigerPosZ, 0, 0, 0.0f, 0.0f);
-	glBindVertexArray(tigerVAO);
-	if (theme_tiger == 0)
-		glBindTexture(GL_TEXTURE_2D, tigerTexture0);
-	if (theme_tiger == 1)
-		glBindTexture(GL_TEXTURE_2D, tigerTexture1);
-	glDrawElements(GL_TRIANGLES, tigerobj.indices.size(), GL_UNSIGNED_INT, 0);
+	create_object("spacecraft", spacecraftPosX, spacecraftPosY, spacecraftPosZ, 0, 0, 0.0f, 0.0f);
+	glBindVertexArray(spacecraftVAO);
+	if (theme_spacecraft == 0)
+		glBindTexture(GL_TEXTURE_2D, spacecraftTexture0);
+	if (theme_spacecraft == 1)
+		glBindTexture(GL_TEXTURE_2D, spacecraftTexture1);
+	glDrawElements(GL_TRIANGLES, spacecraftobj.indices.size(), GL_UNSIGNED_INT, 0);
 
 
 	//Lights
@@ -1723,57 +1466,61 @@ void paintGL(void)
 
 	GLint eyePositionUniformLocation =
 		glGetUniformLocation(programID, "eyePositionWorld");
-	vec3 eyePosition(camX + tigerPosX, camY + tigerPosY, camZ + tigerPosZ);
+	vec3 eyePosition(camX + spacecraftPosX, camY + spacecraftPosY, camZ + spacecraftPosZ);
 	glUniform3fv(eyePositionUniformLocation, 1, &eyePosition[0]);
 
-	//	SUN
+	//Sun and Moon
+	/*
+		//	SUN
 
-	transLight = glm::mat4(1.0f);
-	GLint lightPositionUniformLocation =
-		glGetUniformLocation(programID, "lightPositionWorld");
-	glm::vec4 SunPosition(1.0f, 2.0f, 0.0f, 1.0f);
-	transLight = glm::rotate(transLight, glm::radians(seconds * 15.0f), glm::vec3(-2.0f, 1.0f, 0.0f));;		//Loop every 24 seconds
-	transLight = glm::translate(transLight, glm::vec3(1.5f, 0.0f, 0.0f));
-	//transLight = glm::translate(transLight, glm::vec3(tigerPosX, tigerPosY, tigerPosZ));
-	vec3 lightPosition(transLight * SunPosition);
-	glUniform3fv(lightPositionUniformLocation, 1, &lightPosition[0]);
+		transLight = glm::mat4(1.0f);
+		GLint lightPositionUniformLocation =
+			glGetUniformLocation(programID, "lightPositionWorld");
+		glm::vec4 SunPosition(1.0f, 2.0f, 0.0f, 1.0f);
+		transLight = glm::rotate(transLight, glm::radians(seconds * 15.0f), glm::vec3(-2.0f, 1.0f, 0.0f));;		//Loop every 24 seconds
+		transLight = glm::translate(transLight, glm::vec3(1.5f, 0.0f, 0.0f));
+		//transLight = glm::translate(transLight, glm::vec3(tigerPosX, tigerPosY, tigerPosZ));
+		vec3 lightPosition(transLight * SunPosition);
+		glUniform3fv(lightPositionUniformLocation, 1, &lightPosition[0]);
 
-	GLint sunColorUniformLocation =
-		glGetUniformLocation(programID, "sunColor");
-	float sunBrightness = cos(glm::radians(seconds * 15.0f)) * 3.0f + 1.0f;
-	//Dynamic brightness of light throughout the day!
-	sunBrightness = 0.85 * glm::clamp(sunBrightness, 0.0f, 1.0f);
-	//Dynamic color of light throughout the day!
-	glm::vec4 sunColor(1.0f, glm::clamp(cos(glm::radians(seconds * 15.0f)) * 1.2f + 0.32f, 0.0f, 1.0f), glm::clamp(cos(glm::radians(seconds * 15.0f)) * 0.7f + 0.7f, 0.0f, 1.0f), 1.0f);
-	sunColor = sunBrightness * sunColor;
+		GLint sunColorUniformLocation =
+			glGetUniformLocation(programID, "sunColor");
+		float sunBrightness = cos(glm::radians(seconds * 15.0f)) * 3.0f + 1.0f;
+		//Dynamic brightness of light throughout the day!
+		sunBrightness = 0.85 * glm::clamp(sunBrightness, 0.0f, 1.0f);
+		//Dynamic color of light throughout the day!
+		glm::vec4 sunColor(1.0f, glm::clamp(cos(glm::radians(seconds * 15.0f)) * 1.2f + 0.32f, 0.0f, 1.0f), glm::clamp(cos(glm::radians(seconds * 15.0f)) * 0.7f + 0.7f, 0.0f, 1.0f), 1.0f);
+		sunColor = sunBrightness * sunColor;
 
-	float skyBrightness = cos(glm::radians(seconds * 15.0f)) * 3.0f + 1.0f;
-	skyBrightness = glm::clamp(sunBrightness, 0.05f, 1.0f);
-	skyColor = glm::vec4(0.85f, glm::clamp(cos(glm::radians(seconds * 15.0f)) * 1.7f + 0.4f, 0.2f, 0.85f), glm::clamp(cos(glm::radians(seconds * 15.0f)) * 0.7f + 0.9f, 0.0f, 1.0f), 1.0f);
-	skyColor = skyBrightness * skyColor;
-	glUniform4fv(sunColorUniformLocation, 1, &sunColor[0]);
+		float skyBrightness = cos(glm::radians(seconds * 15.0f)) * 3.0f + 1.0f;
+		skyBrightness = glm::clamp(sunBrightness, 0.05f, 1.0f);
+		skyColor = glm::vec4(0.85f, glm::clamp(cos(glm::radians(seconds * 15.0f)) * 1.7f + 0.4f, 0.2f, 0.85f), glm::clamp(cos(glm::radians(seconds * 15.0f)) * 0.7f + 0.9f, 0.0f, 1.0f), 1.0f);
+		skyColor = skyBrightness * skyColor;
+		glUniform4fv(sunColorUniformLocation, 1, &sunColor[0]);
 
-	//	MOON
+		//	MOON
 
-	transLight = glm::mat4(1.0f);
-	GLint lightPositionUniformLocationMoon =
-		glGetUniformLocation(programID, "lightPositionWorldMoon");
-	glm::vec4 MoonPosition(1.0f, 2.0f, 0.0f, 1.0f);
-	transLight = glm::rotate(transLight, glm::radians(seconds * 15.0f + 210.0f), glm::vec3(-2.0f, 1.0f, 0.0f));;		//Loop every 24 seconds
-	transLight = glm::translate(transLight, glm::vec3(2.0f, 0.0f, 0.0f));
-	//transLight = glm::translate(transLight, glm::vec3(tigerPosX, tigerPosY, tigerPosZ));
-	vec3 lightPositionMoon(transLight * MoonPosition);
-	glUniform3fv(lightPositionUniformLocationMoon, 1, &lightPositionMoon[0]);
+		transLight = glm::mat4(1.0f);
+		GLint lightPositionUniformLocationMoon =
+			glGetUniformLocation(programID, "lightPositionWorldMoon");
+		glm::vec4 MoonPosition(1.0f, 2.0f, 0.0f, 1.0f);
+		transLight = glm::rotate(transLight, glm::radians(seconds * 15.0f + 210.0f), glm::vec3(-2.0f, 1.0f, 0.0f));;		//Loop every 24 seconds
+		transLight = glm::translate(transLight, glm::vec3(2.0f, 0.0f, 0.0f));
+		//transLight = glm::translate(transLight, glm::vec3(tigerPosX, tigerPosY, tigerPosZ));
+		vec3 lightPositionMoon(transLight * MoonPosition);
+		glUniform3fv(lightPositionUniformLocationMoon, 1, &lightPositionMoon[0]);
 
-	GLint moonColorUniformLocation =
-		glGetUniformLocation(programID, "moonColor");
-	float moonBrightness = cos(glm::radians(seconds * 15.0f + 210.0f)) * 3.0f + 1.0f;
-	//Dynamic brightness of light throughout the night!
-	moonBrightness = 0.25 * glm::clamp(moonBrightness, 0.0f, 1.0f);
-	glm::vec4 moonColor(1.0f, 1.0f, 0.8f, 1.0f);
-	moonColor = moonBrightness * moonColor;
-	glUniform4fv(moonColorUniformLocation, 1, &moonColor[0]);
-	glFlush();
+		GLint moonColorUniformLocation =
+			glGetUniformLocation(programID, "moonColor");
+		float moonBrightness = cos(glm::radians(seconds * 15.0f + 210.0f)) * 3.0f + 1.0f;
+		//Dynamic brightness of light throughout the night!
+		moonBrightness = 0.25 * glm::clamp(moonBrightness, 0.0f, 1.0f);
+		glm::vec4 moonColor(1.0f, 1.0f, 0.8f, 1.0f);
+		moonColor = moonBrightness * moonColor;
+		glUniform4fv(moonColorUniformLocation, 1, &moonColor[0]);
+		glFlush();
+	*/
+
 
 	//	SPOTLIGHT
 	/*
@@ -1803,10 +1550,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 void initialize_game() {
 	glfwSetTime(0.0f);
 	updateTime = 0.0f;
-	tigerPosX = 0.0f;
-	tigerPosY = 0.0f;
-	tigerPosZ = 0.0f;
-	tigerDir = initialDir;
+	spacecraftPosX = 0.0f;
+	spacecraftPosY = 0.0f;
+	spacecraftPosZ = 0.0f;
+	spacecraftDir = initialDir;
 	tigerEnergyTime = -0.5f;
 	tigerDash = false;
 	invincibleTime = 5.0f;
@@ -2124,10 +1871,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 	if (!paused) {
 		if (key == GLFW_KEY_1 && action == GLFW_PRESS) {
-			theme_tiger = 0;
+			theme_spacecraft = 0;
 		}
 		if (key == GLFW_KEY_2 && action == GLFW_PRESS) {
-			theme_tiger = 1;
+			theme_spacecraft = 1;
 		}
 		if (key == GLFW_KEY_3 && action == GLFW_PRESS) {
 			theme_ground = 0;
@@ -2142,9 +1889,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			mt19937 rng(dev());
 			uniform_int_distribution<int> rnd_spd(-5, 5);
 			uniform_int_distribution<int> rnd_rot(-180, 180);
-			tigerDir = rnd_rot(rng);
-			tigerPosX += rnd_spd(rng) * 1.3f * cos(glm::radians(tigerDir - 136.5f));
-			tigerPosZ += rnd_spd(rng) * 1.3f * sin(glm::radians(tigerDir - 136.5f));
+			spacecraftDir = rnd_rot(rng);
+			spacecraftPosX += rnd_spd(rng) * 1.3f * cos(glm::radians(spacecraftDir + 90.0f));
+			spacecraftPosZ += rnd_spd(rng) * 1.3f * sin(glm::radians(spacecraftDir + 90.0f));
 		}
 
 
@@ -2174,38 +1921,38 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 		//Tiger Normal Motion
 		if (!tigerDash && (key == GLFW_KEY_UP || (wasdMovements && key == GLFW_KEY_W)) && action == GLFW_PRESS) {
-			tigerPosX += 0.9f * cos(glm::radians(tigerDir - 136.5f));
-			tigerPosZ += -0.9f * sin(glm::radians(tigerDir - 136.5f));
+			spacecraftPosX += 0.9f * cos(glm::radians(spacecraftDir + 90.0f));
+			spacecraftPosZ += -0.9f * sin(glm::radians(spacecraftDir + 90.0f));
 			movementDetected = true;
 		}
 		if (!tigerDash && (key == GLFW_KEY_DOWN || (wasdMovements && key == GLFW_KEY_S)) && action == GLFW_PRESS) {
-			tigerPosX += -0.5f * cos(glm::radians(tigerDir - 136.5f));
-			tigerPosZ += 0.5f * sin(glm::radians(tigerDir - 136.5f));
+			spacecraftPosX += -0.5f * cos(glm::radians(spacecraftDir + 90.0f));
+			spacecraftPosZ += 0.5f * sin(glm::radians(spacecraftDir + 90.0f));
 			movementDetected = true;
 		}
 		if (!tigerDash && (key == GLFW_KEY_LEFT || (wasdMovements && key == GLFW_KEY_A)) && action == GLFW_PRESS) {
-			tigerDir += 5.0f;
+			spacecraftDir += 5.0f;
 		}
 		if (!tigerDash && (key == GLFW_KEY_RIGHT || (wasdMovements && key == GLFW_KEY_D)) && action == GLFW_PRESS) {
-			tigerDir -= 5.0f;
+			spacecraftDir -= 5.0f;
 		}
 		//	REPEAT
 
 		if (!tigerDash && (key == GLFW_KEY_UP || (wasdMovements && key == GLFW_KEY_W)) && action == GLFW_REPEAT) {
-			tigerPosX += 1.8f * cos(glm::radians(tigerDir - 136.5f));
-			tigerPosZ += -1.8f * sin(glm::radians(tigerDir - 136.5f));
+			spacecraftPosX += 1.8f * cos(glm::radians(spacecraftDir + 90.0f));
+			spacecraftPosZ += -1.8f * sin(glm::radians(spacecraftDir + 90.0f));
 			movementDetected = true;
 		}
 		if (!tigerDash && (key == GLFW_KEY_DOWN || (wasdMovements && key == GLFW_KEY_S)) && action == GLFW_REPEAT) {
-			tigerPosX += -1.0f * cos(glm::radians(tigerDir - 136.5f));
-			tigerPosZ += 1.0f * sin(glm::radians(tigerDir - 136.5f));
+			spacecraftPosX += -1.0f * cos(glm::radians(spacecraftDir + 90.0f));
+			spacecraftPosZ += 1.0f * sin(glm::radians(spacecraftDir + 90.0f));
 			movementDetected = true;
 		}
 		if (!tigerDash && (key == GLFW_KEY_LEFT || (wasdMovements && key == GLFW_KEY_A)) && action == GLFW_REPEAT) {
-			tigerDir += 5.0f;
+			spacecraftDir += 5.0f;
 		}
 		if (!tigerDash && (key == GLFW_KEY_RIGHT || (wasdMovements && key == GLFW_KEY_D)) && action == GLFW_REPEAT) {
-			tigerDir -= 5.0f;
+			spacecraftDir -= 5.0f;
 		}
 	}
 

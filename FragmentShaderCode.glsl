@@ -118,7 +118,7 @@ void main()
 		daColor = texture(myTextureSampler0, UV).rgba * 0.7f * darken_scene;
 	else {
 		daColor =	emissionLight * 3.2f																														//The Light itself
-					+ ambientLight * MaterialAmbientColor * clamp(sunColor + vec4(0.3f, 0.3f, 0.3f, 0.0f), vec4(0.3f, 0.3f, 0.3f, 1), vec4(1, 1, 1, 1)) * 0.45f	//Ambient strengthened when daytime
+					+ ambientLight * MaterialAmbientColor * clamp(sunColor + vec4(0.3f, 0.3f, 0.3f, 0.0f), vec4(0.3f, 0.3f, 0.3f, 1), vec4(1, 1, 1, 1)) * 1.0f	//Ambient strengthened when daytime
 					+ MaterialDiffuseColor * clamp(diffuseLight, 0 , 1) * sunColor * 1.2f + specularLight * MaterialSpecularColor * sunColor					//Sunlight
 					+ MaterialDiffuseColor * clamp(diffuseLightMoon, 0 , 1) * moonColor * 1.2f + specularLightMoon * MaterialSpecularColor * moonColor			//Moonlight
 					;
