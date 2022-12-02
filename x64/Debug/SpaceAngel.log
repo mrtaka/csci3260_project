@@ -1,54 +1,46 @@
 ﻿  main.cpp
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(819,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(820,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(821,62): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(824,17): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(825,16): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(875,24): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(900,25): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(833,13): warning C4101: 'view': unreferenced local variable
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1119,32): warning C4305: 'argument': truncation from 'double' to 'GLclampf'
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1156,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1167,76): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1261,21): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1295,77): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1301,77): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1307,77): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1369,75): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1389,79): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1394,79): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1414,76): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1424,76): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1457,79): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1461,12): warning C4101: 'transLight': unreferenced local variable
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1600,30): warning C4305: '=': truncation from 'double' to 'float'
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1616,34): warning C4305: '=': truncation from 'double' to 'float'
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1624,34): warning C4305: '=': truncation from 'double' to 'float'
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1632,34): warning C4305: '=': truncation from 'double' to 'float'
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1643,30): warning C4305: '=': truncation from 'double' to 'float'
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1651,34): warning C4305: '=': truncation from 'double' to 'float'
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1743,17): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1744,19): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1842,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1843,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1847,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1848,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1855,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1856,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1860,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1861,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1865,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1866,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1892,27): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1963,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1964,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1968,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1969,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1976,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1977,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1981,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1982,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1986,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Timothy\source\repos\SpaceAngel\SpaceAngel\main.cpp(1987,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
-  SpaceAngel.vcxproj -> C:\Users\Timothy\source\repos\SpaceAngel\x64\Debug\SpaceAngel.exe
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(521,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(522,15): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(523,62): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(526,17): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(527,16): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(617,76): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(535,13): warning C4101: 'view': unreferenced local variable
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(656,32): warning C4305: 'argument': truncation from 'double' to 'GLclampf'
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(686,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(787,21): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(821,77): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(827,77): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(833,77): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(927,12): warning C4101: 'transLight': unreferenced local variable
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(995,31): warning C4305: '=': truncation from 'double' to 'float'
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1003,35): warning C4305: '=': truncation from 'double' to 'float'
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1011,35): warning C4305: '=': truncation from 'double' to 'float'
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1019,35): warning C4305: '=': truncation from 'double' to 'float'
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1027,35): warning C4305: '=': truncation from 'double' to 'float'
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1038,31): warning C4305: '=': truncation from 'double' to 'float'
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1046,35): warning C4305: '=': truncation from 'double' to 'float'
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1138,17): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1139,19): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1237,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1238,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1242,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1243,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1250,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1251,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1255,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1256,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1260,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1261,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1287,27): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1358,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1359,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1363,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1364,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1371,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1372,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1376,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1377,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1381,33): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\laptop\Desktop\SpaceAngel\SpaceAngel\main.cpp(1382,37): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  SpaceAngel.vcxproj -> C:\Users\laptop\Desktop\SpaceAngel\x64\Debug\SpaceAngel.exe

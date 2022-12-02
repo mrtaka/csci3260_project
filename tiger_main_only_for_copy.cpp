@@ -1026,7 +1026,7 @@ void sendDataToOpenGL()
 	object_textured_health_bar();
 }
 
-void create_object(string obj, float x /*offset*/, float y /*offset*/, float z /*offset*/, int index, int aggression, float rotation, float wolf_size) {
+void create_object(string obj, float x /*offset*/, float y /*offset*/, float z /*offset*/, int index, int aggression, float rotation, float obj_size) {
 	float shinyLevel = 0.15f;
 	int realColor = 0;
 	glm::vec4 emissionLight(0.0f, 0.0f, 0.0f, 1.0f);
@@ -1176,7 +1176,7 @@ void create_object(string obj, float x /*offset*/, float y /*offset*/, float z /
 		}
 		else
 			trans = glm::rotate(trans, rotation, glm::vec3(0.0f, 1.0f, 0.0f));
-		trans = glm::scale(trans, glm::vec3(wolf_size, wolf_size, wolf_size));	//y is wolfSize here
+		trans = glm::scale(trans, glm::vec3(obj_size, obj_size, obj_size));	//y is wolfSize here
 	}
 	if (obj == "heart") {
 		trans = glm::translate(trans, glm::vec3(x, y - 0.6f, z));

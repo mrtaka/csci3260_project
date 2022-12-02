@@ -4,8 +4,6 @@ in layout(location=0) vec3 position;
 in layout(location=1) vec2 textureCoordinate;
 in layout(location=2) vec3 normalVector;
 
-uniform vec4 ambientLight;
-
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
