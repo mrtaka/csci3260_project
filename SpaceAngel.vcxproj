@@ -136,6 +136,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="FragmentShaderCode.glsl" />
+    <None Include="SkyboxFragmentShaderCode.glsl" />
+    <None Include="SkyboxVertexShaderCode.glsl" />
     <None Include="VertexShaderCode.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

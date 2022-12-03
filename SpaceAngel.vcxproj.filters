@@ -26,6 +26,12 @@
     <None Include="FragmentShaderCode.glsl">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="SkyboxFragmentShaderCode.glsl">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="SkyboxVertexShaderCode.glsl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="tiger_main_only_for_copy.cpp">

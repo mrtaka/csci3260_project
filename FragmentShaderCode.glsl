@@ -5,7 +5,10 @@ in vec2 UV;
 in vec3 normalWorld;
 in vec3 vertexPositionWorld;
 
+uniform bool normalMapping_flag;
+
 uniform sampler2D myTextureSampler0;
+uniform sampler2D myTextureSampler1;
 uniform vec4 shininess;
 uniform float darken_scene;
 uniform int realColor;
@@ -32,6 +35,15 @@ uniform MultiLight littleLight[LIGHT_NUM];
 
 void main()
 {
+	vec3 normal = normalize(normalWorld);
+	if (normalMapping_flag)
+	{
+		//Obtain normal from normal map in range [0,1]
+		normal = texture(myTextureSampler1, UV).rgb;
+		//Transform normal vector to range [-1,1]
+		normal = normalize(normal *	2.0 - 1.0);
+	}
+
 	vec4 MaterialAmbientColor = 1.5f * texture(myTextureSampler0, UV).rgba;	//Increase Contrasts
 	vec4 MaterialDiffuseColor = 1.5f * texture(myTextureSampler0, UV).rgba;
 	vec4 MaterialSpecularColor = shininess;
@@ -118,7 +130,7 @@ void main()
 		daColor = texture(myTextureSampler0, UV).rgba * 0.7f * darken_scene;
 	else {
 		daColor =	emissionLight * 3.2f																														//The Light itself
-					+ ambientLight * MaterialAmbientColor * clamp(sunColor + vec4(0.3f, 0.3f, 0.3f, 0.0f), vec4(0.3f, 0.3f, 0.3f, 1), vec4(1, 1, 1, 1)) * 1.0f	//Ambient strengthened when daytime
+					+ ambientLight * MaterialAmbientColor * clamp(sunColor + vec4(0.3f, 0.3f, 0.3f, 0.0f), vec4(0.3f, 0.3f, 0.3f, 1), vec4(1, 1, 1, 1)) * 2.0f	//Ambient strengthened when daytime
 					+ MaterialDiffuseColor * clamp(diffuseLight, 0 , 1) * sunColor * 1.2f + specularLight * MaterialSpecularColor * sunColor					//Sunlight
 					+ MaterialDiffuseColor * clamp(diffuseLightMoon, 0 , 1) * moonColor * 1.2f + specularLightMoon * MaterialSpecularColor * moonColor			//Moonlight
 					;

@@ -12,6 +12,7 @@ Student Name: Wong Tak Kai
 #include "Dependencies/GLFW/glfw3.h"
 #include "Dependencies/glm/glm.hpp"
 #include "Dependencies/glm/gtc/matrix_transform.hpp"
+#include "Dependencies/glm/gtc/type_ptr.hpp"
 #define STB_IMAGE_IMPLEMENTATION
 #include "Dependencies/stb_image/stb_image.h"
 
@@ -24,8 +25,6 @@ Student Name: Wong Tak Kai
 
 #include <vector>
 #include <map>
-
-//haha
 
 using namespace std;
 using glm::vec3;
@@ -50,6 +49,7 @@ struct Model {
 
 //============intiitize setting=================
 GLuint programID;
+GLuint Skybox_programID;
 
 const int num_of_object = 100; //number of type of object
 Model obj[num_of_object];
@@ -93,13 +93,14 @@ bool play_scene = true;
 
 double updateTime;
 
+string motionState = "default";
+
 int waveNum;
 bool mouseInScreen = false;
 bool holding = false;
-bool autoMouse = false;			//P to toggle
+bool autoMouse = true;			//P to toggle
 bool movementDetected = false;
 bool snapCamera = true;			//O to toggle
-bool wasdMovements = false;		//Q to toggle
 bool paused = false;
 double pauseTime = 0;
 int button0_state = 0;
@@ -241,21 +242,34 @@ std::string readShaderCode(const char* fileName) {
 void installShaders() {
 	GLuint vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+	GLuint skyboxVertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+	GLuint skyboxFragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 
-	const GLchar* adapter[1];
-	//adapter[0] = vertexShaderCode;
+	const GLchar* adapter[2];
 	std::string temp = readShaderCode("VertexShaderCode.glsl");
 	adapter[0] = temp.c_str();
 	glShaderSource(vertexShaderID, 1, adapter, 0);
-	//adapter[0] = fragmentShaderCode;
 	temp = readShaderCode("FragmentShaderCode.glsl");
 	adapter[0] = temp.c_str();
 	glShaderSource(fragmentShaderID, 1, adapter, 0);
 
+	std::string temp2 = readShaderCode("SkyboxVertexShaderCode.glsl");
+	adapter[1] = temp2.c_str();
+	glShaderSource(skyboxVertexShaderID, 1, adapter, 0);
+	temp2 = readShaderCode("SkyboxFragmentShaderCode.glsl");
+	adapter[1] = temp2.c_str();
+	glShaderSource(skyboxFragmentShaderID, 1, adapter, 0);
+
 	glCompileShader(vertexShaderID);
 	glCompileShader(fragmentShaderID);
+	glCompileShader(skyboxVertexShaderID);
+	glCompileShader(skyboxFragmentShaderID);
 
 	if (!checkShaderStatus(vertexShaderID) || !checkShaderStatus(fragmentShaderID))
+		return;
+
+
+	if (!checkShaderStatus(skyboxVertexShaderID) || !checkShaderStatus(skyboxFragmentShaderID))
 		return;
 
 	programID = glCreateProgram();
@@ -263,13 +277,34 @@ void installShaders() {
 	glAttachShader(programID, fragmentShaderID);
 	glLinkProgram(programID);
 
+
+
+	//SKYBOX test
+							//Skybox_programID = glCreateProgram();
+	glAttachShader(Skybox_programID, skyboxVertexShaderID);
+	glAttachShader(Skybox_programID, skyboxFragmentShaderID);
+							//glLinkProgram(Skybox_programID);
+
+							/*
+							if (!checkProgramStatus(Skybox_programID))
+								return;
+							*/
+
+							//glUseProgram(Skybox_programID);
+
+
+
 	if (!checkProgramStatus(programID))
 		return;
+
+	glDeleteShader(skyboxVertexShaderID); //added
+	glDeleteShader(skyboxFragmentShaderID); //added
 
 	glDeleteShader(vertexShaderID); //added
 	glDeleteShader(fragmentShaderID); //added
 
 	glUseProgram(programID);
+
 }
 
 Model loadOBJ(const char* objPath)
@@ -425,9 +460,75 @@ GLuint loadTexture(const char* texturePath)
 	return textureID;
 }
 
+
+unsigned char* loadBMP_data(const char* imagepath, unsigned int* width, unsigned int* height)
+{
+	printf("Reading image %s\n", imagepath);
+
+	unsigned char header[54];
+	unsigned int dataPos;
+	unsigned int imageSize;
+	unsigned char* data;
+
+	// Open the file
+	FILE* file;
+	errno_t err;
+	if ((err = fopen_s(&file, imagepath, "rb")) != 0)
+	{
+		printf("%s could not be opened. Are you in the right directory ? Don't forget to read the FAQ !\n", imagepath);
+		//getchar(); 
+		return 0;
+	}
+
+	if (fread(header, 1, 54, file) != 54) {
+		printf("Not a correct BMP file\n");
+		return 0;
+	}
+	if (header[0] != 'B' || header[1] != 'M') {
+		printf("Not a correct BMP file\n");
+		return 0;
+	}
+	if (*(int*)&(header[0x1E]) != 0) { printf("Not a correct BMP file\n");    return 0; }
+	if (*(int*)&(header[0x1C]) != 24) { printf("Not a correct BMP file\n");    return 0; }
+
+	dataPos = *(int*)&(header[0x0A]);
+	imageSize = *(int*)&(header[0x22]);
+	*width = *(int*)&(header[0x12]);
+	*height = *(int*)&(header[0x16]);
+	if (imageSize == 0)    imageSize = *width * *height * 3;
+	if (dataPos == 0)      dataPos = 54;
+
+	data = new unsigned char[imageSize];
+	fread(data, 1, imageSize, file);
+	fclose(file);
+
+	return data;
+}
+
+GLuint loadCubeMap(vector<const GLchar*> faces)
+{
+	unsigned int width, height;
+	unsigned char* image;
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+	for (GLuint i = 0; i < faces.size(); i++) {
+		image = loadBMP_data(faces[i], &width, &height);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+		delete[] image;
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+	return textureID;
+}
+
 GLuint Texture0;
 
-//===================  cunstom object load function: taka ===================================================
+//===================  custom object load function: taka ===================================================
 void object_load(int Object_ID, const char* objPath, const char* texturePath, const char* texturePath2, const char* texturePath3) {
 
 	obj[Object_ID] = loadOBJ(objPath);
@@ -475,9 +576,83 @@ void object_load(int Object_ID, const char* objPath, const char* texturePath, co
 
 }
 
+
+GLuint skybox_vao, skybox_vbo, skybox_texture;
+
+void obj_skybox()
+{
+	GLuint texture;
+	float size = 3000.0f;
+	// create skybox obj
+	GLfloat skybox_vertices[] = {
+		// Front face
+		+size, +size, -size,
+		-size, +size, -size,
+		+size, -size, -size,
+		-size, -size, -size,
+		+size, -size, -size,
+		-size, +size, -size,
+		// Back face
+		+size, +size, +size,
+		-size, +size, +size,
+		+size, -size, +size,
+		-size, -size, +size,
+		+size, -size, +size,
+		-size, +size, +size,
+		// Bottom face
+		+size, -size, +size,
+		-size, -size, +size,
+		+size, -size, -size,
+		-size, -size, -size,
+		+size, -size, -size,
+		-size, -size, +size,
+		// Top face
+		+size, +size, +size,
+		-size, +size, +size,
+		+size, +size, -size,
+		-size, +size, -size,
+		+size, +size, -size,
+		-size, +size, +size,
+		// Left face
+		-size, +size, +size,
+		-size, +size, -size,
+		-size, -size, +size,
+		-size, -size, -size,
+		-size, -size, +size,
+		-size, +size, -size,
+		// Right face
+		+size, +size, +size,
+		+size, +size, -size,
+		+size, -size, +size,
+		+size, -size, -size,
+		+size, -size, +size,
+		+size, +size, -size,
+	};
+
+	vector<const GLchar*> skybox_faces;
+	skybox_faces.push_back("resources/skybox/right.bmp");
+	skybox_faces.push_back("resources/skybox/left.bmp");
+	skybox_faces.push_back("resources/skybox/top.bmp");
+	skybox_faces.push_back("resources/skybox/bottom.bmp");
+	skybox_faces.push_back("resources/skybox/back.bmp");
+	skybox_faces.push_back("resources/skybox/front.bmp");
+	skybox_texture = loadCubeMap(skybox_faces);
+
+	// create skybox vao & vbo
+	glGenVertexArrays(1, &skybox_vao);
+	glGenBuffers(1, &skybox_vbo);
+	glBindVertexArray(skybox_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, skybox_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(skybox_vertices), &skybox_vertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glBindVertexArray(0);
+}
+
 void sendDataToOpenGL()
 {
-	//Load object and it's textures
+	obj_skybox();
+	//Load object and its textures
 	object_load(10, "resources/ground/ground.obj", "resources/ground/ground_01.jpg", "resources/ground/ground_02.jpg", "0"); //ground
 	object_load(11, "resources/spacecraft/spacecraft.obj", "resources/spacecraft/spacecraft_01.jpg", "resources/spacecraft/spacecraft_02.jpg", "0"); //spacecraft
 	object_load(12, "resources/star/star.obj", "resources/star/star.jpg", "0", "0"); //star
@@ -486,7 +661,7 @@ void sendDataToOpenGL()
 	object_load(15, "resources/heart/heart.obj", "resources/heart/heart_01.jpg", "0", "0"); //heart
 	object_load(16, "resources/ufo/ufo.obj", "resources/ufo/ufo_01.jpg", "resources/ufo/ufo_02.jpg", "0"); //ufo
 	object_load(17, "resources/button/button.obj", "-1", "0", "0"); //button (speical, have 9 different texture in total)
-	object_load(18, "resources/planet/planet.obj", "resources/planet/planet_01.jpg", "0", "0"); //planet
+	object_load(18, "resources/planet/planet.obj", "resources/planet/planet_01.bmp", "resources/planet/planet_normal_01.bmp", "0"); //planet
 	object_load(19, "resources/rock/rock.obj", "resources/rock/rock_01.jpg", "0", "0"); //rock
 }
 
@@ -516,7 +691,7 @@ void create_object(int objID, int textureID, float x /*offset*/, float y /*offse
 	//Camera stuff
 	//translate into camera angle
 	if (play_scene) {
-		projectionMatrix = glm::perspective(glm::radians(45.0f), 1.0f, 1.0f, 180.0f);
+		projectionMatrix = glm::perspective(glm::radians(45.0f), 1.0f, 1.0f, 250.0f);
 
 		camX = 20.0 * sin(cos(glm::radians(yaw * mouseSensitivity)) * cos(glm::radians(pitch * mouseSensitivity)));
 		camY = 20.0 * sin(glm::radians(pitch * mouseSensitivity));
@@ -540,6 +715,7 @@ void create_object(int objID, int textureID, float x /*offset*/, float y /*offse
 		shinyLevel = 0.5f;
 	}
 	else if (objID == 16) {//ufo
+		shinyLevel = 0.5f;
 		trans = glm::translate(trans, glm::vec3(x, y - 1.0f, z));
 		if (aggression == -1) {
 			trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -565,6 +741,30 @@ void create_object(int objID, int textureID, float x /*offset*/, float y /*offse
 		trans = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
 		trans = glm::scale(trans, glm::vec3(obj_size, obj_size, obj_size));
 		trans = glm::rotate(trans, glm::radians(rotation), glm::vec3(0.5f, 0.5f, 0.5f));
+	}
+	else if (objID == 11) {	//spacecraft
+		shinyLevel = 0.5f;
+		trans = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
+		trans = glm::scale(trans, glm::vec3(obj_size, obj_size, obj_size));
+		trans = glm::rotate(trans, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+		if (motionState == "front") {
+			trans = glm::translate(trans, glm::vec3(-20.0f * cos(glm::radians(spacecraftDir + 90.0f)), 0.0f, 20.0f * sin(glm::radians(spacecraftDir + 90.0f))));
+		}
+		else if (motionState == "back") {
+			trans = glm::translate(trans, glm::vec3(10.0f * cos(glm::radians(spacecraftDir + 90.0f)), 0.0f, -10.0f * sin(glm::radians(spacecraftDir + 90.0f))));
+		}
+		else if (motionState == "left") {
+			trans = glm::rotate(trans, glm::radians(5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		}
+		else if (motionState == "right") {
+			trans = glm::rotate(trans, glm::radians(-5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		}
+		else if (motionState == "up") {
+			trans = glm::rotate(trans, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		}
+		else if (motionState == "down") {
+			trans = glm::rotate(trans, glm::radians(-15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		}
 	}
 	else { //general object
 		trans = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
@@ -639,6 +839,10 @@ void initializedGL(void) //run only once
 
 void paintGL(void)
 {
+	//cout << "CamX: " << camX << ", CamZ: " << camZ << endl;
+	//cout << atan2(camX, camZ) << endl;
+
+	//spacecraftDir = glm::degrees(atan2(camZ, -camX)) - 90.0f;
 	if (!paused && tigerHP <= 0) {
 		paused = true;
 		button0_state = 6;
@@ -668,7 +872,6 @@ void paintGL(void)
 	//Bind different textures
 
 
-	//Creating Pseudo Infinitely Looping Random Positions of Grass Piles, Bushes and Dirt Piles
 	int invert = 0;
 	for (int i = -4; i < 5; i++) {
 		for (int j = -4; j < 5; j++) {
@@ -683,7 +886,7 @@ void paintGL(void)
 	for (int i = 0; i < heartNum; i++) {
 		//Check if Collecting Hearts
 		if (!heartDestroyed[i]) {
-			float distance = sqrt(pow((heartPosZ[i] - spacecraftPosZ), 2) + pow((heartPosX[i] - spacecraftPosX), 2));
+			float distance = sqrt(pow((heartPosZ[i] - spacecraftPosZ), 2) + pow((heartPosX[i] - spacecraftPosX), 2) + pow((heartPosY[i] - spacecraftPosY), 2));
 			if (distance < 4.0f) {
 				heartDestroyed[i] = true;
 				tigerHP += 10;
@@ -747,11 +950,9 @@ void paintGL(void)
 
 		if ((seconds - tigerEnergyTime) < 0.2) {
 			spacecraftPosX += 2.7f * cos(glm::radians(spacecraftDir + 90.0f));
-			spacecraftPosY = sin(glm::radians((seconds - tigerEnergyTime) * 900)) * 2.3f;
 			spacecraftPosZ += -2.7f * sin(glm::radians(spacecraftDir + 90.0f));
 		}
 		else {
-			spacecraftPosY = 0.0f;
 			tigerDash = false;
 		}
 	}
@@ -773,7 +974,7 @@ void paintGL(void)
 					int heart_chance = rndHeartChance(rng);
 					if (heart_chance == 4) {
 						heartPosX[heartNum] = wolfPosX[i];
-						heartPosY[heartNum] = 0.0f;
+						heartPosY[heartNum] = wolfPosY[i];
 						heartPosZ[heartNum] = wolfPosZ[i];
 						heartDestroyed[heartNum] = false;
 						heartNum++;
@@ -784,7 +985,7 @@ void paintGL(void)
 					glm::vec2 vector_towards_tiger;
 					float distance;
 					float angle;
-					distance = sqrt(pow((wolfPosZ[i] - spacecraftPosZ), 2) + pow((wolfPosX[i] - spacecraftPosX), 2));
+					distance = sqrt(pow((wolfPosZ[i] - spacecraftPosZ), 2) + pow((wolfPosX[i] - spacecraftPosX), 2) + pow((wolfPosY[i] - spacecraftPosY), 2));
 					//distance = glm::distance(glm::vec2(wolfPosX[i], wolfPosZ[i]), glm::vec2(tigerPosX, tigerPosZ));
 					vector_towards_tiger = glm::normalize(glm::vec2(spacecraftPosX, spacecraftPosZ) - glm::vec2(wolfPosX[i], wolfPosZ[i]));
 					angle = atan2(-vector_towards_tiger.y, vector_towards_tiger.x) + glm::radians(90.0f);
@@ -909,7 +1110,8 @@ void paintGL(void)
 	}
 
 	//normal 3D object
-	create_object(11, theme_spacecraft, spacecraftPosX + 0.8f * cos(glm::radians(spacecraftDir)), spacecraftPosY, spacecraftPosZ + 0.8f * -sin(glm::radians(spacecraftDir)), spacecraftDir + 180.0f, 0.01f, 0, 0); //spacecraft
+	create_object(11, theme_spacecraft, spacecraftPosX, spacecraftPosY, spacecraftPosZ, spacecraftDir, 0.007f, 0, 0); //spacecraft
+	//create_object(11, theme_spacecraft, 0, 0, 0, 0.0f, 0.01f, 0, 0); //spacecraft
 	create_object(12, 0, 0, 0, 0, 0.0f, 0.1f, 0, 0); //star
 	create_object(12, 0, -1, 0, 0, 0.0f, 0.1f, 0, 0); //star
 	create_object(12, 0, -5, 0, 0, 0.0f, 0.1f, 0, 0); //star
@@ -919,7 +1121,7 @@ void paintGL(void)
 	float planet_posz = -150;
 	float ring_radius = 50;
 
-	create_object(18, 0, 0, 0, planet_posz, 2.5f * seconds, 10.0f, 0, 0);//planet
+	create_object(18, 0, 0, 0, planet_posz, 25.0f * seconds, 10.0f, 0, 0);//planet
 	for (int i = 0; i < rock_num; i++) {
 		create_object(19, 0, rock_var[i][1] + ring_radius * (sin(0.1f * (seconds + rock_var[i][0]))), rock_var[i][2] +5.0f , planet_posz + rock_var[i][3] + ring_radius * (cos(0.1f*(seconds + rock_var[i][0]))), rock_var[i][4] * 0.5f * seconds, rock_var[i][5] * 0.2f, 0, 0);//rock
 	}
@@ -934,6 +1136,35 @@ void paintGL(void)
 	GLint eyePositionUniformLocation = glGetUniformLocation(programID, "eyePositionWorld");
 	vec3 eyePosition(camX + spacecraftPosX, camY + spacecraftPosY, camZ + spacecraftPosZ);
 	glUniform3fv(eyePositionUniformLocation, 1, &eyePosition[0]);
+
+
+	//===================================Skybox=================================================
+	/*
+	glDepthMask(GL_FALSE);
+	glUseProgram(Skybox_programID);	//Use specific program ID for skybox rendering
+
+	GLuint Skb_ModelUniformLocation = glGetUniformLocation(Skybox_programID, "M");
+	glm::mat4 Skb_ModelMatrix = glm::mat4(1.0f);
+	glUniformMatrix4fv(Skb_ModelUniformLocation, 1, GL_FALSE, &Skb_ModelMatrix[0][0]);
+	//Remove any translation component of the view matrix
+	glm::mat4 viewMatrix = glm::lookAt(glm::vec3(camX + spacecraftPosX, camY + spacecraftPosY, camZ + spacecraftPosZ), glm::vec3(+spacecraftPosX, +spacecraftPosY, +spacecraftPosZ), glm::vec3(0.0, 1.0, 0.0));
+	glm::mat4 view = glm::mat4(glm::mat3(viewMatrix));	//Remove translation effects
+	float zoom = 1.0f;
+	int screenWidth = 900;
+	int screenHeight = 900;
+	glm::mat4 projection = glm::perspective(zoom, (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
+	glUniformMatrix4fv(glGetUniformLocation(Skybox_programID, "view"), 1, GL_FALSE, glm::value_ptr(projection));
+
+	//skybox cube
+	glBindVertexArray(skybox_vao);
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1i(glGetUniformLocation(Skybox_programID, "skybox"), 0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
+
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+	glDepthMask(GL_TRUE);
+	*/
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -1129,6 +1360,7 @@ void cursor_position_callback(GLFWwindow* window, double x, double y)
 		mouseY = -1500;
 	*/
 	if (!paused) {
+		spacecraftDir = glm::degrees(atan2(camZ, -camX)) - 90.0f;
 		if (tigerHP > 0)
 			button0_state = 0;
 		else
@@ -1188,6 +1420,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	motionState = "default";
 	/*
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
@@ -1226,10 +1459,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_O && action == GLFW_PRESS) {
 		snapCamera = !snapCamera;
 		cout << "snapCamera set to " << snapCamera << endl;
-	}
-	if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
-		wasdMovements = !wasdMovements;
-		cout << "wasdMovements set to " << wasdMovements << endl;
 	}
 
 	if (key == GLFW_KEY_COMMA && action == GLFW_PRESS) {
@@ -1278,7 +1507,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			theme_ground = 1;
 		}
 
-
+		/*
 		if (key == GLFW_KEY_L && action == GLFW_PRESS) {
 			random_device dev;
 			mt19937 rng(dev());
@@ -1288,16 +1517,16 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			spacecraftPosX += rnd_spd(rng) * 1.3f * cos(glm::radians(spacecraftDir + 90.0f));
 			spacecraftPosZ += rnd_spd(rng) * 1.3f * sin(glm::radians(spacecraftDir + 90.0f));
 		}
+		*/
 
-
-		if (!wasdMovements && key == GLFW_KEY_W && action == GLFW_PRESS) {
-			if (brightness < 1.0f)
+		if (key == GLFW_KEY_U && action == GLFW_PRESS) {
+			if (brightness < 1.5f)
 				brightness += 0.1f;
-			if (brightness > 1.0f)
-				brightness = 1.0f;
+			if (brightness > 1.5f)
+				brightness = 1.5f;
 			cout << "Brightness set to: " << brightness << endl;
 		}
-		if (!wasdMovements && key == GLFW_KEY_S && action == GLFW_PRESS) {
+		if (key == GLFW_KEY_Y && action == GLFW_PRESS) {
 			if (brightness > 0.0f)
 				brightness -= 0.1f;
 			if (brightness < 0.0f)
@@ -1307,7 +1536,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 		//	MOVEMENT
 		//Tiger Dash Motion
-		if (key == GLFW_KEY_SPACE && (seconds - tigerEnergyTime) > 1.0f && action == GLFW_PRESS) {
+		if (key == GLFW_KEY_F && (seconds - tigerEnergyTime) > 1.0f && action == GLFW_PRESS) {
 			tigerEnergyTime = seconds;
 			tigerDash = true;
 			movementDetected = true;
@@ -1315,39 +1544,67 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		}
 
 		//Tiger Normal Motion
-		if (!tigerDash && (key == GLFW_KEY_UP || (wasdMovements && key == GLFW_KEY_W)) && action == GLFW_PRESS) {
+		if (!tigerDash && (key == GLFW_KEY_UP || key == GLFW_KEY_W) && action == GLFW_PRESS) {
 			spacecraftPosX += 0.9f * cos(glm::radians(spacecraftDir + 90.0f));
 			spacecraftPosZ += -0.9f * sin(glm::radians(spacecraftDir + 90.0f));
 			movementDetected = true;
+			motionState = "front";
 		}
-		if (!tigerDash && (key == GLFW_KEY_DOWN || (wasdMovements && key == GLFW_KEY_S)) && action == GLFW_PRESS) {
+		if (!tigerDash && (key == GLFW_KEY_DOWN || key == GLFW_KEY_S) && action == GLFW_PRESS) {
 			spacecraftPosX += -0.5f * cos(glm::radians(spacecraftDir + 90.0f));
 			spacecraftPosZ += 0.5f * sin(glm::radians(spacecraftDir + 90.0f));
 			movementDetected = true;
+			motionState = "back";
 		}
-		if (!tigerDash && (key == GLFW_KEY_LEFT || (wasdMovements && key == GLFW_KEY_A)) && action == GLFW_PRESS) {
-			spacecraftDir += 5.0f;
+		if (!tigerDash && (key == GLFW_KEY_LEFT || key == GLFW_KEY_A) && action == GLFW_PRESS) {
+			spacecraftPosX += 0.5f * cos(glm::radians(spacecraftDir + 180.0f));
+			spacecraftPosZ += -0.5f * sin(glm::radians(spacecraftDir + 180.0f));
+			motionState = "left";
 		}
-		if (!tigerDash && (key == GLFW_KEY_RIGHT || (wasdMovements && key == GLFW_KEY_D)) && action == GLFW_PRESS) {
-			spacecraftDir -= 5.0f;
+		if (!tigerDash && (key == GLFW_KEY_RIGHT || key == GLFW_KEY_D) && action == GLFW_PRESS) {
+			spacecraftPosX += 0.5f * cos(glm::radians(spacecraftDir));
+			spacecraftPosZ += -0.5f * sin(glm::radians(spacecraftDir));
+			motionState = "right";
+		}
+		if (!tigerDash && key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+			spacecraftPosY += 0.5f;
+			motionState = "up";
+		}
+		if (!tigerDash && key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS) {
+			spacecraftPosY -= 0.5f;
+			motionState = "down";
 		}
 		//	REPEAT
 
-		if (!tigerDash && (key == GLFW_KEY_UP || (wasdMovements && key == GLFW_KEY_W)) && action == GLFW_REPEAT) {
+		if (!tigerDash && (key == GLFW_KEY_UP || key == GLFW_KEY_W) && action == GLFW_REPEAT) {
 			spacecraftPosX += 1.8f * cos(glm::radians(spacecraftDir + 90.0f));
 			spacecraftPosZ += -1.8f * sin(glm::radians(spacecraftDir + 90.0f));
 			movementDetected = true;
+			motionState = "front";
 		}
-		if (!tigerDash && (key == GLFW_KEY_DOWN || (wasdMovements && key == GLFW_KEY_S)) && action == GLFW_REPEAT) {
+		if (!tigerDash && (key == GLFW_KEY_DOWN || key == GLFW_KEY_S) && action == GLFW_REPEAT) {
 			spacecraftPosX += -1.0f * cos(glm::radians(spacecraftDir + 90.0f));
 			spacecraftPosZ += 1.0f * sin(glm::radians(spacecraftDir + 90.0f));
 			movementDetected = true;
+			motionState = "back";
 		}
-		if (!tigerDash && (key == GLFW_KEY_LEFT || (wasdMovements && key == GLFW_KEY_A)) && action == GLFW_REPEAT) {
-			spacecraftDir += 5.0f;
+		if (!tigerDash && (key == GLFW_KEY_LEFT || key == GLFW_KEY_A) && action == GLFW_REPEAT) {
+			spacecraftPosX += 1.0f * cos(glm::radians(spacecraftDir + 180.0f));
+			spacecraftPosZ += -1.0f * sin(glm::radians(spacecraftDir + 180.0f));
+			motionState = "left";
 		}
-		if (!tigerDash && (key == GLFW_KEY_RIGHT || (wasdMovements && key == GLFW_KEY_D)) && action == GLFW_REPEAT) {
-			spacecraftDir -= 5.0f;
+		if (!tigerDash && (key == GLFW_KEY_RIGHT || key == GLFW_KEY_D) && action == GLFW_REPEAT) {
+			spacecraftPosX += 1.0f * cos(glm::radians(spacecraftDir));
+			spacecraftPosZ += -1.0f * sin(glm::radians(spacecraftDir));
+			motionState = "right";
+		}
+		if (!tigerDash && key == GLFW_KEY_SPACE && action == GLFW_REPEAT) {
+			spacecraftPosY += 1.0f;
+			motionState = "up";
+		}
+		if (!tigerDash && key == GLFW_KEY_LEFT_SHIFT && action == GLFW_REPEAT) {
+			spacecraftPosY -= 1.0f;
+			motionState = "down";
 		}
 	}
 
