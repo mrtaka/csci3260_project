@@ -460,7 +460,6 @@ GLuint loadTexture(const char* texturePath)
 	return textureID;
 }
 
-
 unsigned char* loadBMP_data(const char* imagepath, unsigned int* width, unsigned int* height)
 {
 	printf("Reading image %s\n", imagepath);
@@ -526,6 +525,7 @@ GLuint loadCubeMap(vector<const GLchar*> faces)
 	return textureID;
 }
 
+
 GLuint Texture0;
 
 //===================  custom object load function: taka ===================================================
@@ -578,6 +578,35 @@ void object_load(int Object_ID, const char* objPath, const char* texturePath, co
 
 
 GLuint skybox_vao, skybox_vbo, skybox_texture;
+
+void skybox_Settings(int width, int size) {
+	if (size == 3000) {
+		glDepthMask(GL_FALSE);
+		glUseProgram(Skybox_programID);	//Use specific program ID for skybox rendering
+
+		GLuint Skb_ModelUniformLocation = glGetUniformLocation(Skybox_programID, "M");
+		glm::mat4 Skb_ModelMatrix = glm::mat4(1.0f);
+		glUniformMatrix4fv(Skb_ModelUniformLocation, 1, GL_FALSE, &Skb_ModelMatrix[0][0]);
+		//Remove any translation component of the view matrix
+		glm::mat4 viewMatrix = glm::lookAt(glm::vec3(camX + spacecraftPosX, camY + spacecraftPosY, camZ + spacecraftPosZ), glm::vec3(+spacecraftPosX, +spacecraftPosY, +spacecraftPosZ), glm::vec3(0.0, 1.0, 0.0));
+		glm::mat4 view = glm::mat4(glm::mat3(viewMatrix));	//Remove translation effects
+		float zoom = 1.0f;
+		int screenWidth = 900;
+		int screenHeight = 900;
+		glm::mat4 projection = glm::perspective(zoom, (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
+		glUniformMatrix4fv(glGetUniformLocation(Skybox_programID, "view"), 1, GL_FALSE, glm::value_ptr(projection));
+
+		//skybox cube
+		glBindVertexArray(skybox_vao);
+		glActiveTexture(GL_TEXTURE0);
+		glUniform1i(glGetUniformLocation(Skybox_programID, "skybox"), 0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
+
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glBindVertexArray(0);
+		glDepthMask(GL_TRUE);
+	}
+}
 
 void obj_skybox()
 {
@@ -669,13 +698,14 @@ void create_object(int objID, int textureID, float x /*offset*/, float y /*offse
 	
 	float shinyLevel = 0.15f;
 	int realColor = 0;
+	bool screen_anchor = false;
+
+
 	glm::vec4 emissionLight(0.0f, 0.0f, 0.0f, 1.0f);
 	glm::mat4 trans = glm::mat4(1.0f);
 	glm::mat4 projectionMatrix;
 	glm::mat4 viewMatrix;
 	unsigned int slot = 0;
-	bool anchor = false;
-	bool screen_anchor = false;
 
 	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 
@@ -746,7 +776,7 @@ void create_object(int objID, int textureID, float x /*offset*/, float y /*offse
 		shinyLevel = 0.5f;
 		trans = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
 		trans = glm::scale(trans, glm::vec3(obj_size, obj_size, obj_size));
-		trans = glm::rotate(trans, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+		trans = glm::rotate(trans, glm::radians(rotation + 180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 		if (motionState == "front") {
 			trans = glm::translate(trans, glm::vec3(-20.0f * cos(glm::radians(spacecraftDir + 90.0f)), 0.0f, 20.0f * sin(glm::radians(spacecraftDir + 90.0f))));
 		}
@@ -754,16 +784,16 @@ void create_object(int objID, int textureID, float x /*offset*/, float y /*offse
 			trans = glm::translate(trans, glm::vec3(10.0f * cos(glm::radians(spacecraftDir + 90.0f)), 0.0f, -10.0f * sin(glm::radians(spacecraftDir + 90.0f))));
 		}
 		else if (motionState == "left") {
-			trans = glm::rotate(trans, glm::radians(5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			trans = glm::rotate(trans, glm::radians(-15.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		}
 		else if (motionState == "right") {
-			trans = glm::rotate(trans, glm::radians(-5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+			trans = glm::rotate(trans, glm::radians(15.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		}
 		else if (motionState == "up") {
-			trans = glm::rotate(trans, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+			trans = glm::rotate(trans, glm::radians(-15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		}
 		else if (motionState == "down") {
-			trans = glm::rotate(trans, glm::radians(-15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+			trans = glm::rotate(trans, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		}
 	}
 	else { //general object
@@ -775,8 +805,6 @@ void create_object(int objID, int textureID, float x /*offset*/, float y /*offse
 	GLint modelTransformMatrixUniformLocation = glGetUniformLocation(programID, "model");
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &trans[0][0]);
 
-	if (anchor)
-		viewMatrix = glm::lookAt(glm::vec3(camX, camY, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0, 1.0, 0.0));
 	if (screen_anchor) {
 		//viewMatrix = glm::lookAt(glm::vec3(camX, camY, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0, 1.0, 0.0));
 		viewMatrix = glm::mat4(1.0f);
@@ -1110,13 +1138,13 @@ void paintGL(void)
 	}
 
 	//normal 3D object
-	create_object(11, theme_spacecraft, spacecraftPosX, spacecraftPosY, spacecraftPosZ, spacecraftDir, 0.007f, 0, 0); //spacecraft
+	create_object(11, theme_spacecraft, spacecraftPosX, spacecraftPosY, spacecraftPosZ, spacecraftDir, 0.006f, 0, 0); //spacecraft
 	//create_object(11, theme_spacecraft, 0, 0, 0, 0.0f, 0.01f, 0, 0); //spacecraft
 	create_object(12, 0, 0, 0, 0, 0.0f, 0.1f, 0, 0); //star
 	create_object(12, 0, -1, 0, 0, 0.0f, 0.1f, 0, 0); //star
 	create_object(12, 0, -5, 0, 0, 0.0f, 0.1f, 0, 0); //star
 	create_object(10, 0, 0, 0, 0, 0.0f, 1.0f, 0, 0); //ground
-	create_object(16, 0, -7, 0, 0, 0.0f, 0.1f, 0, 0);//ufo
+	create_object(16, 0, -7, 0, 0, 0.0f, 0.07f, 0, 0);//ufo
 
 	float planet_posz = -150;
 	float ring_radius = 50;
@@ -1139,32 +1167,7 @@ void paintGL(void)
 
 
 	//===================================Skybox=================================================
-	/*
-	glDepthMask(GL_FALSE);
-	glUseProgram(Skybox_programID);	//Use specific program ID for skybox rendering
-
-	GLuint Skb_ModelUniformLocation = glGetUniformLocation(Skybox_programID, "M");
-	glm::mat4 Skb_ModelMatrix = glm::mat4(1.0f);
-	glUniformMatrix4fv(Skb_ModelUniformLocation, 1, GL_FALSE, &Skb_ModelMatrix[0][0]);
-	//Remove any translation component of the view matrix
-	glm::mat4 viewMatrix = glm::lookAt(glm::vec3(camX + spacecraftPosX, camY + spacecraftPosY, camZ + spacecraftPosZ), glm::vec3(+spacecraftPosX, +spacecraftPosY, +spacecraftPosZ), glm::vec3(0.0, 1.0, 0.0));
-	glm::mat4 view = glm::mat4(glm::mat3(viewMatrix));	//Remove translation effects
-	float zoom = 1.0f;
-	int screenWidth = 900;
-	int screenHeight = 900;
-	glm::mat4 projection = glm::perspective(zoom, (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
-	glUniformMatrix4fv(glGetUniformLocation(Skybox_programID, "view"), 1, GL_FALSE, glm::value_ptr(projection));
-
-	//skybox cube
-	glBindVertexArray(skybox_vao);
-	glActiveTexture(GL_TEXTURE0);
-	glUniform1i(glGetUniformLocation(Skybox_programID, "skybox"), 0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture);
-
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-	glBindVertexArray(0);
-	glDepthMask(GL_TRUE);
-	*/
+	skybox_Settings(3000, 900);
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -1566,6 +1569,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			spacecraftPosZ += -0.5f * sin(glm::radians(spacecraftDir));
 			motionState = "right";
 		}
+		/*
 		if (!tigerDash && key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
 			spacecraftPosY += 0.5f;
 			motionState = "up";
@@ -1574,6 +1578,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			spacecraftPosY -= 0.5f;
 			motionState = "down";
 		}
+		*/
 		//	REPEAT
 
 		if (!tigerDash && (key == GLFW_KEY_UP || key == GLFW_KEY_W) && action == GLFW_REPEAT) {
@@ -1598,6 +1603,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			spacecraftPosZ += -1.0f * sin(glm::radians(spacecraftDir));
 			motionState = "right";
 		}
+		/*
 		if (!tigerDash && key == GLFW_KEY_SPACE && action == GLFW_REPEAT) {
 			spacecraftPosY += 1.0f;
 			motionState = "up";
@@ -1606,6 +1612,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			spacecraftPosY -= 1.0f;
 			motionState = "down";
 		}
+		*/
 	}
 
 
