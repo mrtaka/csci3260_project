@@ -64,6 +64,11 @@ int spacecraft_texture_id = 0;
 int ground_texture_id = 0;
 
 unsigned int slot = 0;
+
+
+//LED brightness
+float led_brightness = 0.5f;
+
 //===========intiitize planet ring================
 const int rock_num = 250;
 float rock_var[rock_num][6];
@@ -108,6 +113,8 @@ int button1_state = 3;
 double pauseX = 450;
 double pauseY = 450;
 
+float sunModifier = 1.0f;
+
 float spacecraftEnergyTime = -0.5f;
 bool spacecraftDash = false;
 
@@ -117,6 +124,9 @@ double mouseSensitivity = 1.0;
 float camX;
 float camY;
 float camZ;
+float shootX;
+float shootY;
+float shootZ;
 float sun_distance = 50.0f;
 float moon_distance = 50.0f;
 
@@ -181,7 +191,20 @@ glm::vec2 ufoDashVector[ufoNum];
 float ufoDashDistance[ufoNum];
 float ufoDeathTime[ufoNum];
 
+const int bulletNum = 40000000;
+float bulletPosX[bulletNum];
+float bulletPosY[bulletNum];
+float bulletPosZ[bulletNum];
+float bulletRot1[bulletNum];
+float bulletRot2[bulletNum];
+glm::vec3 bulletDir[bulletNum];
+int bulletState[bulletNum];
+
+
 int ufoSpawned;
+int bulletSpawned = 0;
+float bulletSpawnTime = -5.0f;
+float shotTime = -5.0f;
 int typeSpawned;
 
 void get_OpenGL_info()
@@ -688,12 +711,16 @@ void sendDataToOpenGL()
 	object_load(13, "resources/health_bar/health_bar.obj", "resources/health_bar/health_bar_01.jpg", "0", "0"); //healthbar
 	object_load(14, "resources/energy_bar/energy_bar.obj", "resources/energy_bar/energy_bar_01.jpg", "0", "0"); //energy_bar
 	object_load(15, "resources/heart/heart.obj", "resources/heart/heart_01.jpg", "0", "0"); //heart
-	object_load(16, "resources/ufo/ufo.obj", "resources/ufo/ufo_01.jpg", "resources/ufo/ufo_02.jpg", "0"); //ufo
+	object_load(16, "resources/ufo/ufo.obj", "resources/ufo/ufo_01.bmp", "resources/ufo/ufo_02.bmp", "0"); //ufo
 	object_load(17, "resources/button/button.obj", "-1", "0", "0"); //button (speical, have 9 different texture in total)
 	object_load(18, "resources/planet/planet.obj", "resources/planet/planet_01.bmp", "resources/planet/planet_normal_01.bmp", "0"); //planet
 	object_load(19, "resources/rock/rock.obj", "resources/rock/rock_01.jpg", "0", "0"); //rock
 	object_load(25, "resources/skybox/skybox.obj", "resources/skybox/skybox_01.bmp", "0", "0"); //space
 	object_load(26, "resources/sun/sun.obj", "resources/sun/sun_01.jpg", "0", "0"); //sun
+	object_load(27, "resources/bullet/bullet.obj", "resources/bullet/bullet_01.jpg", "0", "0"); //bullet
+	object_load(30, "resources/dock/dock.obj", "resources/dock/dock_01.jpg", "resources/dock/dock_02.jpg", "0"); //dock
+	object_load(31, "resources/led/led.obj", "resources/led/led_01.jpg", "0", "0"); //LED
+	object_load(32, "resources/target/target.obj", "resources/target/target_01.bmp", "0", "0"); //target
 }
 
 void create_object(int objID, int textureID, float x /*offset*/, float y /*offset*/, float z /*offset*/, float rotation, float obj_size, int index, int aggression) {
@@ -730,6 +757,10 @@ void create_object(int objID, int textureID, float x /*offset*/, float y /*offse
 		camY = 20.0 * sin(glm::radians(pitch * mouseSensitivity));
 		camZ = -20.0 * cos(glm::radians(pitch * mouseSensitivity)) * sin(glm::radians(yaw * mouseSensitivity));
 
+		shootX = 20.0 * sin(cos(glm::radians(yaw * mouseSensitivity)) * cos(glm::radians((pitch - 7.0f) * mouseSensitivity)));
+		shootY = 20.0 * sin(glm::radians((pitch - 7.0f) * mouseSensitivity));
+		shootZ = -20.0 * cos(glm::radians((pitch - 7.0f) * mouseSensitivity)) * sin(glm::radians(yaw * mouseSensitivity));
+
 		if (snapCamera and movementDetected and !autoMouse) {
 			camX = -20.0 * cos(glm::radians(spacecraftDir + 90.0f));
 			camZ = 20.0 * sin(glm::radians(spacecraftDir + 90.0f));
@@ -748,7 +779,8 @@ void create_object(int objID, int textureID, float x /*offset*/, float y /*offse
 		shinyLevel = 0.5f;
 	}
 	else if (objID == 16) {//ufo
-		shinyLevel = 0.5f;
+		shinyLevel = 0.7f;
+		emissionLight = glm::vec4(0.03f, 0.03f, 0.03f, 1.0f);
 		trans = glm::translate(trans, glm::vec3(x, y - 1.0f, z));
 		if (aggression == -1) {
 			trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -776,7 +808,7 @@ void create_object(int objID, int textureID, float x /*offset*/, float y /*offse
 		trans = glm::rotate(trans, glm::radians(rotation), glm::vec3(0.5f, 0.5f, 0.5f));
 	}
 	else if (objID == 11) {	//spacecraft
-		shinyLevel = 0.5f;
+		shinyLevel = 0.7f;
 		trans = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
 		trans = glm::scale(trans, glm::vec3(obj_size, obj_size, obj_size));
 		trans = glm::rotate(trans, glm::radians(rotation + 180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -829,6 +861,52 @@ void create_object(int objID, int textureID, float x /*offset*/, float y /*offse
 			glm::clamp(cos(glm::radians(seconds * 15.0f)) * 0.35f + 0.5f, 0.0f, 1.0f),
 			glm::clamp(cos(glm::radians(seconds * 15.0f + 120.0f)) * 0.35f + 0.5f, 0.0f, 0.8f),
 			glm::clamp(cos(glm::radians(seconds * 15.0f + 240.0f)) * 0.35f + 0.5f, 0.0f, 0.8f));
+
+		emissionLight = 0.35f * sunModifier * emissionLight;
+	}
+	else if (objID == 27) { //bullet
+		trans = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
+		trans = glm::scale(trans, glm::vec3(0.1f, 0.1f, 0.1f));
+		trans = glm::rotate(trans, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+		
+		if (index == 0) emissionLight = glm::vec4(led_brightness * 2, 0.0f, 0.0f, 0.1f);
+		else if (index == 1) emissionLight = glm::vec4(0.0f, led_brightness * 2, 0.0f, 0.1f);
+		else if (index == 2) emissionLight = glm::vec4(0.0f, 0.0f, led_brightness * 2, 0.1f);
+		else emissionLight = glm::vec4(0.0f, 0.0f, 0.0f, 0.1f);
+
+		emissionLight = 0.35f * emissionLight;
+		
+	}
+	else if (objID == 15) { //heart
+		emissionLight = glm::vec4(0.05f, 0.05f, 0.05f, 1.0f);
+		trans = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
+		trans = glm::scale(trans, glm::vec3(obj_size, obj_size, obj_size));
+		trans = glm::rotate(trans, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+	}
+	else if (objID == 31) { //LED
+
+		trans = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z + 0.1f));
+		trans = glm::scale(trans, glm::vec3(obj_size, obj_size, obj_size));
+		trans = glm::rotate(trans, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+
+		if (index == 0) emissionLight = glm::vec4(led_brightness * 2, 0.0f, 0.0f, 0.1f);
+		else if (index == 1) emissionLight = glm::vec4(0.0f, led_brightness * 2, 0.0f, 0.1f);
+		else if (index == 2) emissionLight = glm::vec4(0.0f, 0.0f, led_brightness * 2, 0.1f);
+		else emissionLight = glm::vec4(0.0f, 0.0f, 0.0f, 0.1f);
+
+		emissionLight = 0.35f * emissionLight;
+	}
+	else if (objID == 32) { //target
+		realColor = 2;
+		screen_anchor = true;
+		trans = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
+		trans = glm::scale(trans, glm::vec3(obj_size, obj_size, obj_size));
+		trans = glm::rotate(trans, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+
+		if (index == 0) emissionLight = glm::vec4(led_brightness * 2, 0.0f, 0.0f, 0.1f);
+		else if (index == 1) emissionLight = glm::vec4(0.0f, led_brightness * 2, 0.0f, 0.1f);
+		else if (index == 2) emissionLight = glm::vec4(0.0f, 0.0f, led_brightness * 2, 0.1f);
+		else emissionLight = glm::vec4(0.0f, 0.0f, 0.0f, 0.1f);
 
 		emissionLight = 0.35f * emissionLight;
 	}
@@ -953,7 +1031,7 @@ void paintGL(void)
 		//Check if Collecting Hearts
 		if (!heartDestroyed[i]) {
 			float distance = sqrt(pow((heartPosZ[i] - spacecraftPosZ), 2) + pow((heartPosX[i] - spacecraftPosX), 2) + pow((heartPosY[i] - spacecraftPosY), 2));
-			if (distance < 6.0f) {
+			if (distance < 7.5f) {
 				heartDestroyed[i] = true;
 				spacecraftHP += 10;
 				if (spacecraftHP > 100)
@@ -962,11 +1040,11 @@ void paintGL(void)
 		}
 
 		if (!heartDestroyed[i]) {
-			create_object(15, 0, heartPosX[i], heartPosY[i]-0.6f, heartPosZ[i], seconds * 90.0f, 0.075f, 0, 0);	//heart
+			create_object(15, 0, heartPosX[i], heartPosY[i]-0.6f, heartPosZ[i], seconds * 90.0f, 0.1f, 0, 0);	//heart
 		}
 	}
 
-	//Spawn Wolves
+	//Spawn UFO
 	if ((ufoSpawned - ufoDeath) < (3 + waveNum) * 7) {
 		random_device dev;
 		mt19937 rng(dev());
@@ -974,6 +1052,7 @@ void paintGL(void)
 		uniform_int_distribution<int> rndDistance2(85, 120);
 		uniform_int_distribution<int> rndDistance(120, 180);
 		uniform_int_distribution<int> rndRotation(-180, 180);
+		uniform_int_distribution<int> rndRotation2(0, 180);
 
 		float spawnDistanceOffset = (float)rndDistance(rng);
 
@@ -986,13 +1065,16 @@ void paintGL(void)
 			spawnDistanceOffset = (float)rndDistance2(rng);
 
 		float spawnAngleOffset = (float)rndRotation(rng);
+		float spawnAngleOffset2 = (float)rndRotation2(rng);
 
-		float spawnXOffset = spawnDistanceOffset * cos(glm::radians(spawnAngleOffset));
-		float spawnZOffset = spawnDistanceOffset * sin(glm::radians(spawnAngleOffset));
+		float spawnXOffset = spawnDistanceOffset * cos(glm::radians(spawnAngleOffset)) * sin(glm::radians(spawnAngleOffset2));
+		float spawnYOffset = spawnDistanceOffset * cos(glm::radians(spawnAngleOffset2));
+		float spawnZOffset = spawnDistanceOffset * sin(glm::radians(spawnAngleOffset)) * sin(glm::radians(spawnAngleOffset2));
 
 		if (spawnQueue[typeSpawned] == 0) {
 			for (int i = ufoSpawned; i < (ufoSpawned + 5); i++) {
 				ufoPosX[i] += spawnXOffset;
+				ufoPosY[i] += spawnYOffset;
 				ufoPosZ[i] += spawnZOffset;
 				ufoAlive[i] = true;
 			}
@@ -1003,6 +1085,7 @@ void paintGL(void)
 		else if (spawnQueue[typeSpawned] == 1) {
 			for (int i = ufoSpawned; i < (ufoSpawned + 2); i++) {
 				ufoPosX[i] += spawnXOffset;
+				ufoPosY[i] += spawnYOffset;
 				ufoPosZ[i] += spawnZOffset;
 				ufoAlive[i] = true;
 			}
@@ -1052,6 +1135,7 @@ void paintGL(void)
 				if (ufoDeathTime[i] == -1.0f) {
 					glm::vec2 vector_towards_spacecraft;
 					float distance;
+					float bullet_distance;
 					float angle;
 					distance = sqrt(pow((ufoPosZ[i] - spacecraftPosZ), 2) + pow((ufoPosX[i] - spacecraftPosX), 2) + pow((ufoPosY[i] - spacecraftPosY), 2));
 					vector_towards_spacecraft = glm::normalize(glm::vec2(spacecraftPosX, spacecraftPosZ) - glm::vec2(ufoPosX[i], ufoPosZ[i]));
@@ -1067,14 +1151,25 @@ void paintGL(void)
 						}
 					}
 					//Check if damaged by spacecraft
-					if (spacecraftDash && distance < 5.0f) {
+					if (spacecraftDash && distance < 5.5f) {
 						ufoHP[i] -= 1;
 						if (ufoHP[i] <= 0) {
 							ufoDeathTime[i] = seconds;
 							ufoAgressiveness[i] = -1;
 						}
 					}
-
+					//Check if damaged by bullet
+					for (int j = 0; j < bulletSpawned; j++) {
+						bullet_distance = sqrt(pow((ufoPosZ[i] - bulletPosZ[j]), 2) + pow((ufoPosX[i] - bulletPosX[j]), 2) + pow((ufoPosY[i] - bulletPosY[j]), 2));
+						if (bulletState[j] != -1 && bullet_distance < 3.5f) {
+							ufoHP[i] -= 1;
+							if (ufoHP[i] <= 0) {
+								ufoDeathTime[i] = seconds;
+								ufoAgressiveness[i] = -1;
+							}
+							bulletState[j] = -1;
+						}
+					}
 					//Move back to scene if too far away
 					if (distance > 300.0f) {
 
@@ -1149,10 +1244,10 @@ void paintGL(void)
 					}
 					if ((seconds - ufoEnergyTime[i]) > 1.0f && distance > 10.0f && distance < 110.0f) {
 						if ((ufoPosY[i] - spacecraftPosY) > 2.0f) {
-							ufoPosY[i] -= 3.0f;
+							ufoPosY[i] -= 1.0f;
 						}
 						else if ((spacecraftPosY - ufoPosY[i]) > 2.0f) {
-							ufoPosY[i] += 3.0f;
+							ufoPosY[i] += 1.0f;
 						}
 					}
 				}
@@ -1169,6 +1264,79 @@ void paintGL(void)
 		}
 	}
 
+	if (!paused) {
+		if (seconds - shotTime > 0.003f) {
+			shotTime = seconds;
+			for (int i = 0; i < bulletSpawned; i++) {
+				if (bulletState[i] != -1) {
+					bulletPosX[i] += bulletDir[i].x * 0.08f;
+					bulletPosY[i] += bulletDir[i].y * 0.08f;
+					bulletPosZ[i] += bulletDir[i].z * 0.08f;
+				}
+			}
+		}
+	}
+
+	if (!paused && holding) {
+		if (seconds - bulletSpawnTime > 0.2f) {
+			bulletSpawnTime = seconds;
+			bulletSpawned += 2;
+			glm::vec4 original_1;
+			glm::vec4 original_2;
+			if (motionState == "default" || motionState == "front" || motionState == "back") {
+				original_1 = glm::vec4(-4.0f, 0.2f, -3.0f, 1.0f);
+				original_2 = glm::vec4(4.0f, 0.2f, -3.0f, 1.0f);
+			}
+			else if (motionState == "up") {
+				original_1 = glm::vec4(-4.0f, 1.4f, -3.0f, 1.0f);
+				original_2 = glm::vec4(4.0f, 1.4f, -3.0f, 1.0f);
+			}
+			else if (motionState == "down") {
+				original_1 = glm::vec4(-4.0f, -1.0f, -3.0f, 1.0f);
+				original_2 = glm::vec4(4.0f, -1.0f, -3.0f, 1.0f);
+			}
+			else if (motionState == "left") {
+				original_1 = glm::vec4(-4.0f, -1.0f, -3.0f, 1.0f);
+				original_2 = glm::vec4(4.0f, 1.4f, -3.0f, 1.0f);
+			}
+			else if (motionState == "right") {
+				original_1 = glm::vec4(-4.0f, 1.4f, -3.0f, 1.0f);
+				original_2 = glm::vec4(4.0f, -1.0f, -3.0f, 1.0f);
+			}
+
+			float transposed1_X = 0.0f;
+			float transposed1_Z = 0.0f;
+			float transposed2_X = 0.0f;
+			float transposed2_Z = 0.0f;
+
+			transposed1_X += original_1.x * cos(glm::radians(spacecraftDir + 0.0f));
+			transposed1_Z += -original_1.x * sin(glm::radians(spacecraftDir + 0.0f));
+			transposed1_X += original_1.z * cos(glm::radians(spacecraftDir - 90.0f));
+			transposed1_Z += -original_1.z * sin(glm::radians(spacecraftDir - 90.0f));
+
+			transposed2_X += original_2.x * cos(glm::radians(spacecraftDir + 0.0f));
+			transposed2_Z += -original_2.x * sin(glm::radians(spacecraftDir + 0.0f));
+			transposed2_X += original_2.z * cos(glm::radians(spacecraftDir - 90.0f));
+			transposed2_Z += -original_2.z * sin(glm::radians(spacecraftDir - 90.0f));
+
+			bulletPosX[bulletSpawned - 2] = spacecraftPosX + transposed1_X;
+			bulletPosY[bulletSpawned - 2] = spacecraftPosY + original_1.y;
+			bulletPosZ[bulletSpawned - 2] = spacecraftPosZ + transposed1_Z;
+			bulletDir[bulletSpawned - 2] = glm::vec3(-shootX, -shootY, -shootZ);
+
+			bulletPosX[bulletSpawned - 1] = spacecraftPosX + transposed2_X;
+			bulletPosY[bulletSpawned - 1] = spacecraftPosY + original_2.y;
+			bulletPosZ[bulletSpawned - 1] = spacecraftPosZ + transposed2_Z;
+			bulletDir[bulletSpawned - 1] = glm::vec3(-shootX, -shootY, -shootZ);
+		}
+	}
+
+	for (int i = 0; i < bulletSpawned; i++) {
+		if (bulletState[i] != -1) {
+			create_object(27, 0, bulletPosX[i], bulletPosY[i], bulletPosZ[i], bulletRot1[i], bulletRot2[i], i, bulletState[i]);
+		}
+	}
+
 	//=============================generate 2D and 3D object=====================================
 
 	//Display Health and Energy bar
@@ -1180,6 +1348,9 @@ void paintGL(void)
 		create_object(17, button0_state, 0.0f, 0.15f, 0.0f, 0.0f, 0.0f, 0, 0); //button_continue(0)/_clicked(1)/_hovered(2) , button_restart(6)/_clicked(7)/_hovered(8)
 		create_object(17, button1_state, 0.0f, -0.15f, 0.0f, 0.0f, 0.0f, 0, 0); //button_quit(3)/_clicked(4)/_hovered(5)
 	}
+	else {
+		create_object(32, 0, 0.0f, 0.287f, 0.0f, 0.0f, 0.007f, 0, 0);	//target
+	}
 
 	//normal 3D object
 	create_object(11, theme_spacecraft, spacecraftPosX, spacecraftPosY, spacecraftPosZ, spacecraftDir, 0.006f, 0, 0); //spacecraft
@@ -1188,8 +1359,63 @@ void paintGL(void)
 	//create_object(12, 0, -5, 0, 0, 0.0f, 0.1f, 0, 0); //star
 	create_object(25, 0, 0, 0, 0, 0.0f, 220.0f, 0, 0); //space
 	create_object(26, 0, 0, 0, 0, 0.0f, 0.001f, 0, 0); //sun
-	//create_object(10, 0, 0, 0, 0, 0.0f, 1.0f, 0, 0); //ground
-	//create_object(16, 0, -7, 0, 0, 0.0f, 0.07f, 0, 0);//ufo
+
+	//ship dock
+	int int_second = seconds * 5;
+	int dock_ring = 7;
+	int dock_spacing = 10;
+	float light_offset_X = 7.2f;
+	float light_offset_Y = -0.5f;
+
+	float light_z;
+
+	for (int i = 0; i < dock_ring; i++) {
+		if (i == int_second % dock_ring) {
+			create_object(30, 0, 0, -10.0f, -(dock_ring * dock_spacing / 2) + i * dock_spacing, 90.0f, 200.0f, 0, 0);//dock1
+			light_z = -(dock_ring * dock_spacing / 2) + i * dock_spacing;
+			create_object(31, 0, -light_offset_X, light_offset_Y, light_z, 270.0f, 0.25f, 0, 0); //RED LED
+			create_object(31, 0, light_offset_X, light_offset_Y, light_z, 90.0f, 0.25f, 1, 0); //Green LED
+
+		}
+		create_object(30, 0, 0, -10.0f, -(dock_ring * dock_spacing / 2) + i * dock_spacing, 90.0f, 200.0f, 0, 0);//dock1
+		create_object(31, 0, -light_offset_X, light_offset_Y, -(dock_ring * dock_spacing / 2) + i * dock_spacing, 270.0f, 0.25f, -1, 0); //Close LED Left
+		create_object(31, 0, light_offset_X, light_offset_Y, -(dock_ring * dock_spacing / 2) + i * dock_spacing, 90.0f, 0.25f, -1, 0); //Close LED right
+	}
+
+
+	//create_object(31, 0, -light_offset_X, light_offset_Y, light_z, 270.0f, 0.25f, 0, 0); //Close LED
+	//create_object(31, 0, light_offset_X, light_offset_Y, -4.0f, 90.0f, 0.25f, 1, 0); //Close LED
+
+
+	//=================== Dock LED light ====================================
+
+	if (led_brightness != 0) {
+		//LED lighting 1
+		GLint lightColor1 = glGetUniformLocation(programID, "light_color1");
+		glm::vec4 color1(0.6f, 0.0f, 0.0f, 1.0f);
+		glUniform4fv(lightColor1, 1, &color1[0]);
+
+		GLint lightPositionUniformLocation1 = glGetUniformLocation(programID, "lightPositionWorld1");
+		glm::vec3 lightPosition1 = glm::vec3(-light_offset_X, light_offset_Y, light_z);
+		glUniform3fv(lightPositionUniformLocation1, 1, &lightPosition1[0]);
+
+		//LED lighting 2
+		GLint lightColor2 = glGetUniformLocation(programID, "light_color2");
+		glm::vec4 color2(0.0f, 0.6f, 0.0f, 1.0f);
+		glUniform4fv(lightColor2, 1, &color2[0]);
+
+		GLint lightPositionUniformLocation2 = glGetUniformLocation(programID, "lightPositionWorld2");
+		glm::vec3 lightPosition2 = glm::vec3(light_offset_X, light_offset_Y, light_z);
+		glUniform3fv(lightPositionUniformLocation2, 1, &lightPosition2[0]);
+
+	}
+
+	//intensity
+	GLint intensity = glGetUniformLocation(programID, "intensity");
+	glUniform1f(intensity, led_brightness);
+	//=====================================================================
+
+	//planet and planet ring
 
 	float planet_posz = -150;
 	float ring_radius = 50;
@@ -1258,6 +1484,10 @@ void initialize_game() {
 	invincibleTime = 5.0f;
 	spacecraftHP = 100;
 	heartNum = 0;
+	
+	bulletSpawned = 0;
+	bulletSpawnTime = -5.0f;
+	shotTime = -5.0f;
 
 	waveNum = 1;
 	typeSpawned = 0;
@@ -1274,6 +1504,16 @@ void initialize_game() {
 	uniform_int_distribution<int> rnd4(2, 4);
 	uniform_int_distribution<int> rndSpawnType(0, 1);
 	uniform_int_distribution<int> rndRotation(-180, 180);
+
+	for (int i = 0; i < bulletNum; i++) {
+		bulletPosX[i] = 0.0f;
+		bulletPosY[i] = 0.0f;
+		bulletPosZ[i] = 0.0f;
+		bulletRot1[i] = 0.0f;
+		bulletRot2[i] = 0.0f;
+		bulletDir[i] = glm::vec3(0.0f, 0.0f, 0.0f);
+		bulletState[i] = 0;
+	}
 
 	for (int i = 0; i < ufoNum; i++) {
 		ufoAlive[i] = false;
@@ -1607,6 +1847,21 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			cout << "Brightness set to: " << brightness << endl;
 		}
 
+		//For SUN
+		if (key == GLFW_KEY_J && action == GLFW_PRESS) {
+			if (sunModifier < 1.5f)
+				sunModifier += 0.1f;
+			if (sunModifier > 1.5f)
+				sunModifier = 1.5f;
+			cout << "sunModifier set to: " << sunModifier << endl;
+		}
+		if (key == GLFW_KEY_H && action == GLFW_PRESS) {
+			if (sunModifier > 0.4f)
+				sunModifier -= 0.1f;
+			if (sunModifier < 0.4f)
+				sunModifier = 0.0f;
+			cout << "sunModifier set to: " << sunModifier << endl;
+		}
 		//	MOVEMENT
 		//Spacecraft Dash Motion
 		if (key == GLFW_KEY_F && (seconds - spacecraftEnergyTime) > 1.0f && action == GLFW_PRESS) {
@@ -1639,7 +1894,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			spacecraftPosZ += -0.5f * sin(glm::radians(spacecraftDir));
 			motionState = "right";
 		}
-		/*
 		if (!spacecraftDash && key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
 			spacecraftPosY += 0.5f;
 			motionState = "up";
@@ -1648,7 +1902,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			spacecraftPosY -= 0.5f;
 			motionState = "down";
 		}
-		*/
 		//	REPEAT
 
 		if (!spacecraftDash && (key == GLFW_KEY_UP || key == GLFW_KEY_W) && action == GLFW_REPEAT) {
@@ -1673,7 +1926,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			spacecraftPosZ += -1.0f * sin(glm::radians(spacecraftDir));
 			motionState = "right";
 		}
-		/*
 		if (!spacecraftDash && key == GLFW_KEY_SPACE && action == GLFW_REPEAT) {
 			spacecraftPosY += 1.0f;
 			motionState = "up";
@@ -1682,7 +1934,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			spacecraftPosY -= 1.0f;
 			motionState = "down";
 		}
-		*/
 	}
 
 
@@ -1723,6 +1974,21 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_R && action == GLFW_PRESS) {
 		initialize_game();
 	}
+
+	//LED lighting brightness control
+	if (key == GLFW_KEY_T && action == GLFW_PRESS && led_brightness < 1.0f) {
+		led_brightness += 0.1f;
+		cout << "led brightness set to " << led_brightness << endl;
+	}
+	if (key == GLFW_KEY_G && action == GLFW_PRESS && led_brightness > 0.0f && led_brightness <= 1.1f) {
+		if (led_brightness < 0.11) {
+			led_brightness = 0.0;
+		}
+		else {
+			led_brightness -= 0.1f;
+		}
+		cout << "led brightness set to " << led_brightness << endl;
+	}
 }
 
 int main(int argc, char* argv[])
@@ -1749,7 +2015,7 @@ int main(int argc, char* argv[])
 	initialize_ring_data();
 
 	/* Create a windowed mode window and its OpenGL context */
-	window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "SpaceAngel v0.1", NULL, NULL);
+	window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "SpaceAngel v2.4", NULL, NULL);
 	if (!window) {
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
