@@ -60,7 +60,7 @@ GLuint Texture[num_of_object][10]; //number of texture
 
 //texture related
 GLuint TextureID;
-int tiger_texture_id = 0;
+int spacecraft_texture_id = 0;
 int ground_texture_id = 0;
 
 unsigned int slot = 0;
@@ -108,8 +108,8 @@ int button1_state = 3;
 double pauseX = 450;
 double pauseY = 450;
 
-float tigerEnergyTime = -0.5f;
-bool tigerDash = false;
+float spacecraftEnergyTime = -0.5f;
+bool spacecraftDash = false;
 
 glm::vec4 skyColor;
 
@@ -131,7 +131,7 @@ float spacecraftPosY = 0.0f;
 float spacecraftPosZ = 0.0f;
 const float initialDir = 0.0f;	//Facing Z direction, later maybe change to something else
 float spacecraftDir;
-int tigerHP = 100;
+int spacecraftHP = 100;
 float invincibleTime;
 
 int heartNum;
@@ -160,28 +160,28 @@ float mudPosY[bushNum];
 float mudPosZ[bushNum];
 float mudSize[bushNum];
 
-int wolfDeath = 0;
-int wolfIndex = 0;
+int ufoDeath = 0;
+int ufoIndex = 0;
 
 const int spawnQueueMax = 1000;
 int spawnQueue[spawnQueueMax];
 
-const int wolfNum = 300;
-float wolfPosX[wolfNum];
-float wolfPosY[wolfNum];
-float wolfPosZ[wolfNum];
-int wolfAgressiveness[wolfNum];
-bool wolfAlive[wolfNum];
-float wolfRot[wolfNum];
-float wolfSize[wolfNum];
-bool wolfAttacked[wolfNum];
-int wolfHP[wolfNum];
-double wolfEnergyTime[wolfNum];
-glm::vec2 wolfDashVector[wolfNum];
-float wolfDashDistance[wolfNum];
-float wolfDeathTime[wolfNum];
+const int ufoNum = 300;
+float ufoPosX[ufoNum];
+float ufoPosY[ufoNum];
+float ufoPosZ[ufoNum];
+int ufoAgressiveness[ufoNum];
+bool ufoAlive[ufoNum];
+float ufoRot[ufoNum];
+float ufoSize[ufoNum];
+bool ufoAttacked[ufoNum];
+int ufoHP[ufoNum];
+double ufoEnergyTime[ufoNum];
+glm::vec2 ufoDashVector[ufoNum];
+float ufoDashDistance[ufoNum];
+float ufoDeathTime[ufoNum];
 
-int wolfSpawned;
+int ufoSpawned;
 int typeSpawned;
 
 void get_OpenGL_info()
@@ -692,13 +692,16 @@ void sendDataToOpenGL()
 	object_load(17, "resources/button/button.obj", "-1", "0", "0"); //button (speical, have 9 different texture in total)
 	object_load(18, "resources/planet/planet.obj", "resources/planet/planet_01.bmp", "resources/planet/planet_normal_01.bmp", "0"); //planet
 	object_load(19, "resources/rock/rock.obj", "resources/rock/rock_01.jpg", "0", "0"); //rock
+	object_load(25, "resources/skybox/skybox.obj", "resources/skybox/skybox_01.bmp", "0", "0"); //space
+	object_load(26, "resources/sun/sun.obj", "resources/sun/sun_01.jpg", "0", "0"); //sun
 }
 
 void create_object(int objID, int textureID, float x /*offset*/, float y /*offset*/, float z /*offset*/, float rotation, float obj_size, int index, int aggression) {
 	
 	float shinyLevel = 0.15f;
-	int realColor = 0;
+	int realColor = 0;	//0 for general, 1 for outside-scene real color, 2 for inside-scene real color
 	bool screen_anchor = false;
+	bool anchor = false;
 
 
 	glm::vec4 emissionLight(0.0f, 0.0f, 0.0f, 1.0f);
@@ -721,7 +724,7 @@ void create_object(int objID, int textureID, float x /*offset*/, float y /*offse
 	//Camera stuff
 	//translate into camera angle
 	if (play_scene) {
-		projectionMatrix = glm::perspective(glm::radians(45.0f), 1.0f, 1.0f, 250.0f);
+		projectionMatrix = glm::perspective(glm::radians(45.0f), 1.0f, 1.0f, 500.0f);
 
 		camX = 20.0 * sin(cos(glm::radians(yaw * mouseSensitivity)) * cos(glm::radians(pitch * mouseSensitivity)));
 		camY = 20.0 * sin(glm::radians(pitch * mouseSensitivity));
@@ -753,7 +756,7 @@ void create_object(int objID, int textureID, float x /*offset*/, float y /*offse
 		}
 		else
 			trans = glm::rotate(trans, rotation, glm::vec3(0.0f, 1.0f, 0.0f));
-		trans = glm::scale(trans, glm::vec3(obj_size, obj_size, obj_size));	//y is wolfSize here
+		trans = glm::scale(trans, glm::vec3(obj_size, obj_size, obj_size));
 	}
 	else if (objID == 17) {	//button
 		screen_anchor = true;
@@ -796,6 +799,39 @@ void create_object(int objID, int textureID, float x /*offset*/, float y /*offse
 			trans = glm::rotate(trans, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		}
 	}
+	else if (objID == 25) {	//space
+		shinyLevel = 0.0f;
+		realColor = 2;
+		anchor = true;
+		trans = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
+		trans = glm::scale(trans, glm::vec3(obj_size, obj_size, obj_size));
+		trans = glm::rotate(trans, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+		//trans = glm::translate(glm::mat4(1.0f), glm::vec3(-camX, -camY, -camZ));
+	}
+	else if (objID == 26) { //sun
+		anchor = true;
+		sun_distance = 72.0f;
+		trans = glm::scale(trans, glm::vec3(obj_size, obj_size, obj_size));
+
+		trans = glm::translate(trans, sun_distance * glm::vec3(1.0f, 2.0f, 0.0f));
+
+		glm::mat4 origin_offset = glm::mat4(1.0f);
+		origin_offset = glm::translate(origin_offset, sun_distance * glm::vec3(-1.0f, -2.0f, 0.0f));
+
+		glm::mat4 rotation_at_origin = glm::mat4(1.0f);
+		rotation_at_origin = glm::rotate(rotation_at_origin, glm::radians(seconds * 15.0f + 180.0f), glm::vec3(-2.0f, 1.0f, 0.0f));
+
+		trans = rotation_at_origin * origin_offset * trans;		//Loop every 24 seconds
+
+		trans = glm::translate(trans, sun_distance * glm::vec3(1.5f, 0.0f, 0.0f));;
+
+		emissionLight = glm::vec4(1.0f,
+			glm::clamp(cos(glm::radians(seconds * 15.0f)) * 0.35f + 0.5f, 0.0f, 1.0f),
+			glm::clamp(cos(glm::radians(seconds * 15.0f + 120.0f)) * 0.35f + 0.5f, 0.0f, 0.8f),
+			glm::clamp(cos(glm::radians(seconds * 15.0f + 240.0f)) * 0.35f + 0.5f, 0.0f, 0.8f));
+
+		emissionLight = 0.35f * emissionLight;
+	}
 	else { //general object
 		trans = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
 		trans = glm::scale(trans, glm::vec3(obj_size, obj_size, obj_size));
@@ -805,6 +841,8 @@ void create_object(int objID, int textureID, float x /*offset*/, float y /*offse
 	GLint modelTransformMatrixUniformLocation = glGetUniformLocation(programID, "model");
 	glUniformMatrix4fv(modelTransformMatrixUniformLocation, 1, GL_FALSE, &trans[0][0]);
 
+	if (anchor)
+		viewMatrix = glm::lookAt(glm::vec3(camX, camY, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0, 1.0, 0.0));
 	if (screen_anchor) {
 		//viewMatrix = glm::lookAt(glm::vec3(camX, camY, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0, 1.0, 0.0));
 		viewMatrix = glm::mat4(1.0f);
@@ -871,7 +909,7 @@ void paintGL(void)
 	//cout << atan2(camX, camZ) << endl;
 
 	//spacecraftDir = glm::degrees(atan2(camZ, -camX)) - 90.0f;
-	if (!paused && tigerHP <= 0) {
+	if (!paused && spacecraftHP <= 0) {
 		paused = true;
 		button0_state = 6;
 		pauseTime = glfwGetTime();
@@ -915,9 +953,11 @@ void paintGL(void)
 		//Check if Collecting Hearts
 		if (!heartDestroyed[i]) {
 			float distance = sqrt(pow((heartPosZ[i] - spacecraftPosZ), 2) + pow((heartPosX[i] - spacecraftPosX), 2) + pow((heartPosY[i] - spacecraftPosY), 2));
-			if (distance < 4.0f) {
+			if (distance < 6.0f) {
 				heartDestroyed[i] = true;
-				tigerHP += 10;
+				spacecraftHP += 10;
+				if (spacecraftHP > 100)
+					spacecraftHP = 100;
 			}
 		}
 
@@ -927,7 +967,7 @@ void paintGL(void)
 	}
 
 	//Spawn Wolves
-	if ((wolfSpawned - wolfDeath) < (3 + waveNum) * 7) {
+	if ((ufoSpawned - ufoDeath) < (3 + waveNum) * 7) {
 		random_device dev;
 		mt19937 rng(dev());
 		uniform_int_distribution<int> rndDistance1(75, 85);
@@ -937,12 +977,12 @@ void paintGL(void)
 
 		float spawnDistanceOffset = (float)rndDistance(rng);
 
-		//First wolf packs should be spawned nearer
-		if (wolfSpawned == 0)
+		//First UFO packs should be spawned nearer
+		if (ufoSpawned == 0)
 			spawnDistanceOffset = (float)rndDistance1(rng);
-		else if (wolfSpawned < 6)
+		else if (ufoSpawned < 6)
 			spawnDistanceOffset = (float)rndDistance1(rng);
-		else if (wolfSpawned < 13)
+		else if (ufoSpawned < 13)
 			spawnDistanceOffset = (float)rndDistance2(rng);
 
 		float spawnAngleOffset = (float)rndRotation(rng);
@@ -951,49 +991,49 @@ void paintGL(void)
 		float spawnZOffset = spawnDistanceOffset * sin(glm::radians(spawnAngleOffset));
 
 		if (spawnQueue[typeSpawned] == 0) {
-			for (int i = wolfSpawned; i < (wolfSpawned + 5); i++) {
-				wolfPosX[i] += spawnXOffset;
-				wolfPosZ[i] += spawnZOffset;
-				wolfAlive[i] = true;
+			for (int i = ufoSpawned; i < (ufoSpawned + 5); i++) {
+				ufoPosX[i] += spawnXOffset;
+				ufoPosZ[i] += spawnZOffset;
+				ufoAlive[i] = true;
 			}
 
-			wolfSpawned += 5;
+			ufoSpawned += 5;
 			typeSpawned++;
 		}
 		else if (spawnQueue[typeSpawned] == 1) {
-			for (int i = wolfSpawned; i < (wolfSpawned + 2); i++) {
-				wolfPosX[i] += spawnXOffset;
-				wolfPosZ[i] += spawnZOffset;
-				wolfAlive[i] = true;
+			for (int i = ufoSpawned; i < (ufoSpawned + 2); i++) {
+				ufoPosX[i] += spawnXOffset;
+				ufoPosZ[i] += spawnZOffset;
+				ufoAlive[i] = true;
 			}
 
-			wolfSpawned += 2;
+			ufoSpawned += 2;
 			typeSpawned++;
 		}
 	}
 
 	//Repeating Player Movements
 	if (!paused) {
-		//Tiger Dash Motion
+		//Spacecraft Dash Motion
 
-		if ((seconds - tigerEnergyTime) < 0.2) {
+		if ((seconds - spacecraftEnergyTime) < 0.2) {
 			spacecraftPosX += 2.7f * cos(glm::radians(spacecraftDir + 90.0f));
 			spacecraftPosZ += -2.7f * sin(glm::radians(spacecraftDir + 90.0f));
 		}
 		else {
-			tigerDash = false;
+			spacecraftDash = false;
 		}
 	}
 
 	//Repeating AI Movements
 	if (!paused && (seconds - updateTime) > 0.025f) {
 		updateTime = seconds;
-		//cout << tigerPosX << " : " << tigerPosZ << " : " << wolfPosX[0] << " : " << wolfPosZ[0] << endl;
-		for (int i = 0; i < wolfNum; i++) {
-			if (wolfAlive[i]) {
-				if (wolfDeathTime[i] != -1.0f && (seconds - wolfDeathTime[i]) > 4.0f) {
-					wolfAlive[i] = false;
-					wolfDeath++;
+		//cout << spacecraftPosX << " : " << spacecraftPosZ << " : " << ufoPosX[0] << " : " << ufoPosZ[0] << endl;
+		for (int i = 0; i < ufoNum; i++) {
+			if (ufoAlive[i]) {
+				if (ufoDeathTime[i] != -1.0f && (seconds - ufoDeathTime[i]) > 4.0f) {
+					ufoAlive[i] = false;
+					ufoDeath++;
 
 					//Drop heart
 					random_device dev;
@@ -1001,114 +1041,118 @@ void paintGL(void)
 					uniform_int_distribution<int> rndHeartChance(0, 4);
 					int heart_chance = rndHeartChance(rng);
 					if (heart_chance == 4) {
-						heartPosX[heartNum] = wolfPosX[i];
-						heartPosY[heartNum] = wolfPosY[i];
-						heartPosZ[heartNum] = wolfPosZ[i];
+						heartPosX[heartNum] = ufoPosX[i];
+						heartPosY[heartNum] = ufoPosY[i];
+						heartPosZ[heartNum] = ufoPosZ[i];
 						heartDestroyed[heartNum] = false;
 						heartNum++;
 					}
 				}
 
-				if (wolfDeathTime[i] == -1.0f) {
-					glm::vec2 vector_towards_tiger;
+				if (ufoDeathTime[i] == -1.0f) {
+					glm::vec2 vector_towards_spacecraft;
 					float distance;
 					float angle;
-					distance = sqrt(pow((wolfPosZ[i] - spacecraftPosZ), 2) + pow((wolfPosX[i] - spacecraftPosX), 2) + pow((wolfPosY[i] - spacecraftPosY), 2));
-					//distance = glm::distance(glm::vec2(wolfPosX[i], wolfPosZ[i]), glm::vec2(tigerPosX, tigerPosZ));
-					vector_towards_tiger = glm::normalize(glm::vec2(spacecraftPosX, spacecraftPosZ) - glm::vec2(wolfPosX[i], wolfPosZ[i]));
-					angle = atan2(-vector_towards_tiger.y, vector_towards_tiger.x) + glm::radians(90.0f);
+					distance = sqrt(pow((ufoPosZ[i] - spacecraftPosZ), 2) + pow((ufoPosX[i] - spacecraftPosX), 2) + pow((ufoPosY[i] - spacecraftPosY), 2));
+					vector_towards_spacecraft = glm::normalize(glm::vec2(spacecraftPosX, spacecraftPosZ) - glm::vec2(ufoPosX[i], ufoPosZ[i]));
+					angle = atan2(-vector_towards_spacecraft.y, vector_towards_spacecraft.x) + glm::radians(90.0f);
 
-					//Check if damaging tiger
-					if (!wolfAttacked[i] && distance < 3.5f) {
-						wolfAttacked[i] = true;
+					//Check if damaging spacecraft
+					if (!ufoAttacked[i] && distance < 3.5f) {
+						ufoAttacked[i] = true;
 						if ((seconds - invincibleTime) > 0.2f) {
 							//Hurt();
-							tigerHP -= 5;
-							cout << "spcaeshipHP:" << tigerHP << endl;
+							spacecraftHP -= 3;
+							cout << "spcaeshipHP:" << spacecraftHP << endl;
 						}
 					}
-					//Check if damaged by tiger
-					if (tigerDash && distance < 5.0f) {
-						wolfHP[i] -= 1;
-						if (wolfHP[i] <= 0) {
-							wolfDeathTime[i] = seconds;
-							wolfAgressiveness[i] = -1;
+					//Check if damaged by spacecraft
+					if (spacecraftDash && distance < 5.0f) {
+						ufoHP[i] -= 1;
+						if (ufoHP[i] <= 0) {
+							ufoDeathTime[i] = seconds;
+							ufoAgressiveness[i] = -1;
 						}
 					}
 
 					//Move back to scene if too far away
-					if (distance > 200.0f) {
+					if (distance > 300.0f) {
 
-						wolfPosX[i] += 15.0f * vector_towards_tiger.x;
-						wolfPosZ[i] += 15.0f * vector_towards_tiger.y;
+						ufoPosX[i] += 15.0f * vector_towards_spacecraft.x;
+						ufoPosZ[i] += 15.0f * vector_towards_spacecraft.y;
 					}
 					//If close, react according to aggressiveness
-					//During Wolf Dash Motion
-					else if ((seconds - wolfEnergyTime[i]) < 0.3f) {
-						if (wolfAgressiveness[i] == 0) {
-							wolfPosX[i] -= 1.0f * (wolfSize[i] / 2.8f) * wolfDashVector[i].x;
-							wolfPosY[i] = sin(glm::radians((seconds - wolfEnergyTime[i]) * 600)) * 1.3f;
-							wolfPosZ[i] -= 1.0f * wolfDashVector[i].y;
-							wolfRot[i] = atan2(-wolfDashVector[i].y, wolfDashVector[i].x) + glm::radians(270.0f);
+					//During UFO Dash Motion
+					else if ((seconds - ufoEnergyTime[i]) < 0.3f) {
+						if (ufoAgressiveness[i] == 0) {
+							ufoPosX[i] -= 1.0f * ufoDashVector[i].x;
+							ufoPosZ[i] -= 1.0f * ufoDashVector[i].y;
+							ufoRot[i] = atan2(-ufoDashVector[i].y, ufoDashVector[i].x) + glm::radians(270.0f);
 						}
-						if (wolfAgressiveness[i] == 1) {
-							wolfPosX[i] += wolfDashDistance[i] * 1.6f * wolfDashVector[i].x;
-							wolfPosY[i] = sin(glm::radians((seconds - wolfEnergyTime[i]) * 600)) * 1.3f;
-							wolfPosZ[i] += wolfDashDistance[i] * 1.6f * wolfDashVector[i].y;
-							wolfRot[i] = atan2(-wolfDashVector[i].y, wolfDashVector[i].x) + glm::radians(90.0f);
+						if (ufoAgressiveness[i] == 1) {
+							ufoPosX[i] += ufoDashDistance[i] * 1.6f * ufoDashVector[i].x;
+							ufoPosZ[i] += ufoDashDistance[i] * 1.6f * ufoDashVector[i].y;
+							ufoRot[i] = atan2(-ufoDashVector[i].y, ufoDashVector[i].x) + glm::radians(90.0f);
 						}
-						else if (wolfAgressiveness[i] == 2) {
-							wolfPosX[i] += wolfDashDistance[i] * 1.6f * wolfDashVector[i].x;
-							wolfPosY[i] = sin(glm::radians((seconds - wolfEnergyTime[i]) * 600)) * 1.3f;
-							wolfPosZ[i] += wolfDashDistance[i] * 1.6f * wolfDashVector[i].y;
-							wolfRot[i] = atan2(-wolfDashVector[i].y, wolfDashVector[i].x) + glm::radians(90.0f);
+						else if (ufoAgressiveness[i] == 2) {
+							ufoPosX[i] += ufoDashDistance[i] * 1.6f * ufoDashVector[i].x;
+							ufoPosZ[i] += ufoDashDistance[i] * 1.6f * ufoDashVector[i].y;
+							ufoRot[i] = atan2(-ufoDashVector[i].y, ufoDashVector[i].x) + glm::radians(90.0f);
 						}
 					}
 					else {
-						wolfAttacked[i] = true;
-						//Start Wolf Dash Motion
-						if ((seconds - wolfEnergyTime[i]) > 2.5f && distance < 10.0f) {
-							wolfEnergyTime[i] = seconds;
-							wolfDashVector[i] = vector_towards_tiger;
-							wolfDashDistance[i] = distance / 10.0f;
-							if (wolfAgressiveness[i] == 1) {
-								wolfAttacked[i] = false;
+						ufoAttacked[i] = true;
+						//Start UFO Dash Motion
+						if ((seconds - ufoEnergyTime[i]) > 2.5f && distance < 15.0f && (ufoPosY[i] - spacecraftPosY) <= 2.0f && (ufoPosY[i] - spacecraftPosY) >= -2.0f) {
+							ufoEnergyTime[i] = seconds;
+							ufoDashVector[i] = vector_towards_spacecraft;
+							ufoDashDistance[i] = distance / 5.8f;
+							if (ufoAgressiveness[i] == 1) {
+								ufoAttacked[i] = false;
 							}
 						}
 
-						//Scared wolf, Run away if detects player
-						else if (wolfAgressiveness[i] == 0 && distance < 60.0f) {
-							wolfPosX[i] -= 0.4f * (wolfSize[i] / 2.8f) * vector_towards_tiger.x;
-							wolfPosZ[i] -= 0.4f * (wolfSize[i] / 2.8f) * vector_towards_tiger.y;
-							wolfRot[i] = angle + glm::radians(180.0f);
+						//Scared UFO, Run away if detects player
+						else if (ufoAgressiveness[i] == 0 && distance < 110.0f) {
+							ufoPosX[i] -= 3.0f * (ufoSize[i] / 2.8f) * vector_towards_spacecraft.x;
+							ufoPosZ[i] -= 3.0f * (ufoSize[i] / 2.8f) * vector_towards_spacecraft.y;
+							ufoRot[i] = angle + glm::radians(180.0f);
 						}
 
-						//Aggressive wolf, Run close if far but close enough to detect player
-						else if ((seconds - wolfEnergyTime[i]) > 1.0f && distance > 10.0f && distance < 70.0f) {
-							if (wolfAgressiveness[i] == 1) {
-								wolfPosX[i] += 0.58f * (wolfSize[i] / 2.8f) * vector_towards_tiger.x;
-								wolfPosZ[i] += 0.58f * (wolfSize[i] / 2.8f) * vector_towards_tiger.y;
-								wolfRot[i] = angle;
+						//Aggressive UFO, Run close if far but close enough to detect player
+						else if ((seconds - ufoEnergyTime[i]) > 1.0f && distance > 10.0f && distance < 110.0f) {
+							if (ufoAgressiveness[i] == 1) {
+								ufoPosX[i] += 2.7f * (ufoSize[i] / 2.8f) * vector_towards_spacecraft.x;
+								ufoPosZ[i] += 2.7f * (ufoSize[i] / 2.8f) * vector_towards_spacecraft.y;
+								ufoRot[i] = angle;
 							}
-							else if (wolfAgressiveness[i] == 2) {
-								wolfPosX[i] += 0.65f * (wolfSize[i] / 2.8f) * vector_towards_tiger.x;
-								wolfPosZ[i] += 0.65f * (wolfSize[i] / 2.8f) * vector_towards_tiger.y;
-								wolfRot[i] = angle;
+							else if (ufoAgressiveness[i] == 2) {
+								ufoPosX[i] += 3.0f * (ufoSize[i] / 2.8f) * vector_towards_spacecraft.x;
+								ufoPosZ[i] += 3.0f * (ufoSize[i] / 2.8f) * vector_towards_spacecraft.y;
+								ufoRot[i] = angle;
 							}
 						}
 
-						//Aggressive wolf, backups if way too close to player
-						else if ((seconds - wolfEnergyTime[i]) > 0.7f && distance < 8.0f) {
-							if (wolfAgressiveness[i] == 1) {
-								wolfPosX[i] -= 0.25f * vector_towards_tiger.x;
-								wolfPosZ[i] -= 0.25f * vector_towards_tiger.y;
-								wolfRot[i] = angle;
+						//Aggressive UFO, backups if way too close to player
+						else if ((seconds - ufoEnergyTime[i]) > 0.7f && distance < 8.0f) {
+							if (ufoAgressiveness[i] == 1) {
+								ufoPosX[i] -= 1.0f * vector_towards_spacecraft.x;
+								ufoPosZ[i] -= 1.0f * vector_towards_spacecraft.y;
+								ufoRot[i] = angle;
 							}
-							else if (wolfAgressiveness[i] == 2) {
-								wolfPosX[i] -= 0.4f * vector_towards_tiger.x;
-								wolfPosZ[i] -= 0.4f * vector_towards_tiger.y;
-								wolfRot[i] = angle;
+							else if (ufoAgressiveness[i] == 2) {
+								ufoPosX[i] -= 1.35f * vector_towards_spacecraft.x;
+								ufoPosZ[i] -= 1.35f * vector_towards_spacecraft.y;
+								ufoRot[i] = angle;
 							}
+						}
+					}
+					if ((seconds - ufoEnergyTime[i]) > 1.0f && distance > 10.0f && distance < 110.0f) {
+						if ((ufoPosY[i] - spacecraftPosY) > 2.0f) {
+							ufoPosY[i] -= 3.0f;
+						}
+						else if ((spacecraftPosY - ufoPosY[i]) > 2.0f) {
+							ufoPosY[i] += 3.0f;
 						}
 					}
 				}
@@ -1116,20 +1160,20 @@ void paintGL(void)
 		}
 	}
 
-	for (int i = 0; i < wolfNum; i++) {
-		if (wolfAlive[i]) {
-			if(wolfAgressiveness[i] == -1)
-				create_object(16, 1, wolfPosX[i], wolfPosY[i], wolfPosZ[i], wolfRot[i] , wolfSize[i], i, wolfAgressiveness[i]);//destroy ufo
+	for (int i = 0; i < ufoNum; i++) {
+		if (ufoAlive[i]) {
+			if(ufoAgressiveness[i] == -1)
+				create_object(16, 1, ufoPosX[i], ufoPosY[i], ufoPosZ[i], ufoRot[i] , ufoSize[i], i, ufoAgressiveness[i]);//destroy ufo
 			else
-				create_object(16, 0, wolfPosX[i], wolfPosY[i], wolfPosZ[i], wolfRot[i] + seconds * 5.0f, wolfSize[i], i, wolfAgressiveness[i]);//moving ufo
+				create_object(16, 0, ufoPosX[i], ufoPosY[i], ufoPosZ[i], ufoRot[i] + seconds * 5.0f, ufoSize[i], i, ufoAgressiveness[i]);//moving ufo
 		}
 	}
 
 	//=============================generate 2D and 3D object=====================================
 
 	//Display Health and Energy bar
-	create_object(13, 0, -0.4f, 0.9f, 0.0f, (float)(tigerHP) / 100.0f, 0.0f, 0, 0); //health_bar
-	create_object(14, 0, -0.4f, 0.8f, 0.0f, glm::clamp(seconds - tigerEnergyTime, 0.0f, 1.0f), 0.0f, 0, 0); //energy_bar
+	create_object(13, 0, -0.4f, 0.9f, 0.0f, (float)(spacecraftHP) / 100.0f, 0.0f, 0, 0); //health_bar
+	create_object(14, 0, -0.4f, 0.8f, 0.0f, glm::clamp(seconds - spacecraftEnergyTime, 0.0f, 1.0f), 0.0f, 0, 0); //energy_bar
 
 	//Display paused menu
 	if (paused) {
@@ -1139,12 +1183,13 @@ void paintGL(void)
 
 	//normal 3D object
 	create_object(11, theme_spacecraft, spacecraftPosX, spacecraftPosY, spacecraftPosZ, spacecraftDir, 0.006f, 0, 0); //spacecraft
-	//create_object(11, theme_spacecraft, 0, 0, 0, 0.0f, 0.01f, 0, 0); //spacecraft
-	create_object(12, 0, 0, 0, 0, 0.0f, 0.1f, 0, 0); //star
-	create_object(12, 0, -1, 0, 0, 0.0f, 0.1f, 0, 0); //star
-	create_object(12, 0, -5, 0, 0, 0.0f, 0.1f, 0, 0); //star
-	create_object(10, 0, 0, 0, 0, 0.0f, 1.0f, 0, 0); //ground
-	create_object(16, 0, -7, 0, 0, 0.0f, 0.07f, 0, 0);//ufo
+	//create_object(12, 0, 0, 0, 0, 0.0f, 0.1f, 0, 0); //star
+	//create_object(12, 0, -1, 0, 0, 0.0f, 0.1f, 0, 0); //star
+	//create_object(12, 0, -5, 0, 0, 0.0f, 0.1f, 0, 0); //star
+	create_object(25, 0, 0, 0, 0, 0.0f, 220.0f, 0, 0); //space
+	create_object(26, 0, 0, 0, 0, 0.0f, 0.001f, 0, 0); //sun
+	//create_object(10, 0, 0, 0, 0, 0.0f, 1.0f, 0, 0); //ground
+	//create_object(16, 0, -7, 0, 0, 0.0f, 0.07f, 0, 0);//ufo
 
 	float planet_posz = -150;
 	float ring_radius = 50;
@@ -1165,6 +1210,31 @@ void paintGL(void)
 	vec3 eyePosition(camX + spacecraftPosX, camY + spacecraftPosY, camZ + spacecraftPosZ);
 	glUniform3fv(eyePositionUniformLocation, 1, &eyePosition[0]);
 
+	//	SUN
+
+	transLight = glm::mat4(1.0f);
+	GLint lightPositionUniformLocation =
+		glGetUniformLocation(programID, "lightPositionWorld");
+	glm::vec4 SunPosition(1.0f, 2.0f, 0.0f, 1.0f);
+	transLight = glm::rotate(transLight, glm::radians(seconds * 15.0f), glm::vec3(-2.0f, 1.0f, 0.0f));;		//Loop every 24 seconds
+	transLight = glm::translate(transLight, glm::vec3(1.5f, 0.0f, 0.0f));
+	vec3 lightPosition(transLight* SunPosition);
+	glUniform3fv(lightPositionUniformLocation, 1, &lightPosition[0]);
+
+	GLint sunColorUniformLocation =
+		glGetUniformLocation(programID, "sunColor");
+	float sunBrightness = 0.9f;
+	//Dynamic color of light throughout the day!
+	glm::vec4 sunColor(1.0f,
+		glm::clamp(cos(glm::radians(seconds * 15.0f))		   * 0.35f + 0.7f, 0.0f, 1.0f),
+		glm::clamp(cos(glm::radians(seconds * 15.0f + 120.0f)) * 0.35f + 0.7f, 0.0f, 1.0f),
+		glm::clamp(cos(glm::radians(seconds * 15.0f + 240.0f)) * 0.5f + 0.7f, 0.0f, 1.0f));
+	sunColor = sunBrightness * sunColor;
+
+	glUniform4fv(sunColorUniformLocation, 1, &sunColor[0]);
+
+	//End of SUN
+
 
 	//===================================Skybox=================================================
 	skybox_Settings(3000, 900);
@@ -1183,17 +1253,17 @@ void initialize_game() {
 	spacecraftPosY = 0.0f;
 	spacecraftPosZ = 0.0f;
 	spacecraftDir = initialDir;
-	tigerEnergyTime = -0.5f;
-	tigerDash = false;
+	spacecraftEnergyTime = -0.5f;
+	spacecraftDash = false;
 	invincibleTime = 5.0f;
-	tigerHP = 100;
+	spacecraftHP = 100;
 	heartNum = 0;
 
 	waveNum = 1;
 	typeSpawned = 0;
-	wolfSpawned = 0;
-	wolfDeath = 0;
-	wolfIndex = 0;
+	ufoSpawned = 0;
+	ufoDeath = 0;
+	ufoIndex = 0;
 
 	random_device dev;
 	mt19937 rng(dev());
@@ -1205,14 +1275,14 @@ void initialize_game() {
 	uniform_int_distribution<int> rndSpawnType(0, 1);
 	uniform_int_distribution<int> rndRotation(-180, 180);
 
-	for (int i = 0; i < wolfNum; i++) {
-		wolfAlive[i] = false;
-		wolfHP[i] = 1;
-		wolfEnergyTime[i] = -1.0f;
-		wolfDashVector[i] = glm::vec2(0.0f, -1.0f);
-		wolfDashDistance[i] = 0.0f;
-		wolfAttacked[i] = true;
-		wolfDeathTime[i] = -1.0f;
+	for (int i = 0; i < ufoNum; i++) {
+		ufoAlive[i] = false;
+		ufoHP[i] = 1;
+		ufoEnergyTime[i] = -1.0f;
+		ufoDashVector[i] = glm::vec2(0.0f, -1.0f);
+		ufoDashDistance[i] = 0.0f;
+		ufoAttacked[i] = true;
+		ufoDeathTime[i] = -1.0f;
 	}
 
 	for (int i = 0; i < spawnQueueMax; i++) {
@@ -1220,68 +1290,68 @@ void initialize_game() {
 	}
 
 	for (int i = 0; i < spawnQueueMax; i++) {
-		if (wolfIndex < wolfNum - 5) {
+		if (ufoIndex < ufoNum - 5) {
 			if (spawnQueue[i] == 0) {
-				wolfPosX[wolfIndex] = 0.0f;
-				wolfPosY[wolfIndex] = 0.0f;
-				wolfPosZ[wolfIndex] = 0.0f;
-				wolfRot[wolfIndex] = (float)rndRotation(rng);
-				wolfSize[wolfIndex] = 0.38;
-				wolfAgressiveness[wolfIndex] = 1;
-				wolfHP[wolfIndex] = 1;
+				ufoPosX[ufoIndex] = 0.0f;
+				ufoPosY[ufoIndex] = 0.0f;
+				ufoPosZ[ufoIndex] = 0.0f;
+				ufoRot[ufoIndex] = (float)rndRotation(rng);
+				ufoSize[ufoIndex] = 0.38;
+				ufoAgressiveness[ufoIndex] = 1;
+				ufoHP[ufoIndex] = 1;
 
-				wolfPosX[wolfIndex + 1] = 2.5f;
-				wolfPosY[wolfIndex + 1] = 0.0f;
-				wolfPosZ[wolfIndex + 1] = -1.0f;
-				wolfRot[wolfIndex + 1] = (float)rndRotation(rng);
-				wolfSize[wolfIndex + 1] = 0.35;
-				wolfAgressiveness[wolfIndex + 1] = 1;
-				wolfHP[wolfIndex + 1] = 1;
+				ufoPosX[ufoIndex + 1] = 2.5f;
+				ufoPosY[ufoIndex + 1] = 0.0f;
+				ufoPosZ[ufoIndex + 1] = -1.0f;
+				ufoRot[ufoIndex + 1] = (float)rndRotation(rng);
+				ufoSize[ufoIndex + 1] = 0.35;
+				ufoAgressiveness[ufoIndex + 1] = 1;
+				ufoHP[ufoIndex + 1] = 1;
 
-				wolfPosX[wolfIndex + 2] = -2.5f;
-				wolfPosY[wolfIndex + 2] = 0.0f;
-				wolfPosZ[wolfIndex + 2] = -1.0f;
-				wolfRot[wolfIndex + 2] = (float)rndRotation(rng);
-				wolfSize[wolfIndex + 2] = 0.28;
-				wolfAgressiveness[wolfIndex + 2] = 0;
-				wolfHP[wolfIndex + 2] = 1;
+				ufoPosX[ufoIndex + 2] = -2.5f;
+				ufoPosY[ufoIndex + 2] = 0.0f;
+				ufoPosZ[ufoIndex + 2] = -1.0f;
+				ufoRot[ufoIndex + 2] = (float)rndRotation(rng);
+				ufoSize[ufoIndex + 2] = 0.28;
+				ufoAgressiveness[ufoIndex + 2] = 0;
+				ufoHP[ufoIndex + 2] = 1;
 
-				wolfPosX[wolfIndex + 3] = 1.0f;
-				wolfPosY[wolfIndex + 3] = 0.0f;
-				wolfPosZ[wolfIndex + 3] = -2.5f;
-				wolfRot[wolfIndex + 3] = (float)rndRotation(rng);
-				wolfSize[wolfIndex + 3] = 0.28;
-				wolfAgressiveness[wolfIndex + 3] = 0;
-				wolfHP[wolfIndex + 3] = 1;
+				ufoPosX[ufoIndex + 3] = 1.0f;
+				ufoPosY[ufoIndex + 3] = 0.0f;
+				ufoPosZ[ufoIndex + 3] = -2.5f;
+				ufoRot[ufoIndex + 3] = (float)rndRotation(rng);
+				ufoSize[ufoIndex + 3] = 0.28;
+				ufoAgressiveness[ufoIndex + 3] = 0;
+				ufoHP[ufoIndex + 3] = 1;
 
-				wolfPosX[wolfIndex + 4] = -1.0f;
-				wolfPosY[wolfIndex + 4] = 0.0f;
-				wolfPosZ[wolfIndex + 4] = -2.5f;
-				wolfRot[wolfIndex + 4] = (float)rndRotation(rng);
-				wolfSize[wolfIndex + 4] = 0.28;
-				wolfAgressiveness[wolfIndex + 4] = 0;
-				wolfHP[wolfIndex + 4] = 1;
+				ufoPosX[ufoIndex + 4] = -1.0f;
+				ufoPosY[ufoIndex + 4] = 0.0f;
+				ufoPosZ[ufoIndex + 4] = -2.5f;
+				ufoRot[ufoIndex + 4] = (float)rndRotation(rng);
+				ufoSize[ufoIndex + 4] = 0.28;
+				ufoAgressiveness[ufoIndex + 4] = 0;
+				ufoHP[ufoIndex + 4] = 1;
 
-				wolfIndex += 5;
+				ufoIndex += 5;
 			}
 			else if (spawnQueue[i] == 1) {
-				wolfPosX[wolfIndex] = 0.0f;
-				wolfPosY[wolfIndex] = 0.0f;
-				wolfPosZ[wolfIndex] = 0.0f;
-				wolfRot[wolfIndex] = (float)rndRotation(rng);
-				wolfSize[wolfIndex] = 0.38;
-				wolfAgressiveness[wolfIndex] = 1;
-				wolfHP[wolfIndex] = 1;
+				ufoPosX[ufoIndex] = 0.0f;
+				ufoPosY[ufoIndex] = 0.0f;
+				ufoPosZ[ufoIndex] = 0.0f;
+				ufoRot[ufoIndex] = (float)rndRotation(rng);
+				ufoSize[ufoIndex] = 0.38;
+				ufoAgressiveness[ufoIndex] = 1;
+				ufoHP[ufoIndex] = 1;
 
-				wolfPosX[wolfIndex + 1] = 2.0f;
-				wolfPosY[wolfIndex + 1] = 0.0f;
-				wolfPosZ[wolfIndex + 1] = 2.5f;
-				wolfRot[wolfIndex + 1] = (float)rndRotation(rng);
-				wolfSize[wolfIndex + 1] = 0.28;
-				wolfAgressiveness[wolfIndex + 1] = 0;
-				wolfHP[wolfIndex + 1] = 1;
+				ufoPosX[ufoIndex + 1] = 2.0f;
+				ufoPosY[ufoIndex + 1] = 0.0f;
+				ufoPosZ[ufoIndex + 1] = 2.5f;
+				ufoRot[ufoIndex + 1] = (float)rndRotation(rng);
+				ufoSize[ufoIndex + 1] = 0.28;
+				ufoAgressiveness[ufoIndex + 1] = 0;
+				ufoHP[ufoIndex + 1] = 1;
 
-				wolfIndex += 2;
+				ufoIndex += 2;
 			}
 			else if (spawnQueue[i] == 2) {
 			}
@@ -1306,8 +1376,8 @@ void initialize_game() {
 		mudSize[i] = (float)rnd3(rng) * 0.1f;
 	}
 
-	for (int i = 0; i < wolfNum; i++) {
-		wolfAlive[i] = false;
+	for (int i = 0; i < ufoNum; i++) {
+		ufoAlive[i] = false;
 	}
 }
 
@@ -1329,7 +1399,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 			paused = !paused;
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 			glfwSetCursorPos(window, (double)450, (double)450);
-			if (tigerHP <= 0)
+			if (spacecraftHP <= 0)
 				initialize_game();
 
 			GLint darkenSceneUniformLocation =
@@ -1364,7 +1434,7 @@ void cursor_position_callback(GLFWwindow* window, double x, double y)
 	*/
 	if (!paused) {
 		spacecraftDir = glm::degrees(atan2(camZ, -camX)) - 90.0f;
-		if (tigerHP > 0)
+		if (spacecraftHP > 0)
 			button0_state = 0;
 		else
 			button0_state = 6;
@@ -1381,7 +1451,7 @@ void cursor_position_callback(GLFWwindow* window, double x, double y)
 		pauseX = x;
 		pauseY = y;
 		if ((x > 266 && x < 634) && (y > 339 && y < 426)) {
-			if (tigerHP > 0) {
+			if (spacecraftHP > 0) {
 				if (!holding)
 					button0_state = 1;
 				else
@@ -1401,13 +1471,13 @@ void cursor_position_callback(GLFWwindow* window, double x, double y)
 				button1_state = 4;
 			else
 				button1_state = 5;
-			if (tigerHP > 0)
+			if (spacecraftHP > 0)
 				button0_state = 0;
 			else
 				button0_state = 6;
 		}
 		else {
-			if (tigerHP > 0)
+			if (spacecraftHP > 0)
 				button0_state = 0;
 			else
 				button0_state = 6;
@@ -1431,7 +1501,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 	// Sets the Keyboard callback for the current window.
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-		if (tigerHP > 0) {
+		if (spacecraftHP > 0) {
 			paused = !paused;
 			if (paused) {
 				pauseTime = glfwGetTime();
@@ -1538,77 +1608,77 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		}
 
 		//	MOVEMENT
-		//Tiger Dash Motion
-		if (key == GLFW_KEY_F && (seconds - tigerEnergyTime) > 1.0f && action == GLFW_PRESS) {
-			tigerEnergyTime = seconds;
-			tigerDash = true;
+		//Spacecraft Dash Motion
+		if (key == GLFW_KEY_F && (seconds - spacecraftEnergyTime) > 1.0f && action == GLFW_PRESS) {
+			spacecraftEnergyTime = seconds;
+			spacecraftDash = true;
 			movementDetected = true;
 			invincibleTime = seconds;
 		}
 
-		//Tiger Normal Motion
-		if (!tigerDash && (key == GLFW_KEY_UP || key == GLFW_KEY_W) && action == GLFW_PRESS) {
+		//Spacecraft Normal Motion
+		if (!spacecraftDash && (key == GLFW_KEY_UP || key == GLFW_KEY_W) && action == GLFW_PRESS) {
 			spacecraftPosX += 0.9f * cos(glm::radians(spacecraftDir + 90.0f));
 			spacecraftPosZ += -0.9f * sin(glm::radians(spacecraftDir + 90.0f));
 			movementDetected = true;
 			motionState = "front";
 		}
-		if (!tigerDash && (key == GLFW_KEY_DOWN || key == GLFW_KEY_S) && action == GLFW_PRESS) {
+		if (!spacecraftDash && (key == GLFW_KEY_DOWN || key == GLFW_KEY_S) && action == GLFW_PRESS) {
 			spacecraftPosX += -0.5f * cos(glm::radians(spacecraftDir + 90.0f));
 			spacecraftPosZ += 0.5f * sin(glm::radians(spacecraftDir + 90.0f));
 			movementDetected = true;
 			motionState = "back";
 		}
-		if (!tigerDash && (key == GLFW_KEY_LEFT || key == GLFW_KEY_A) && action == GLFW_PRESS) {
+		if (!spacecraftDash && (key == GLFW_KEY_LEFT || key == GLFW_KEY_A) && action == GLFW_PRESS) {
 			spacecraftPosX += 0.5f * cos(glm::radians(spacecraftDir + 180.0f));
 			spacecraftPosZ += -0.5f * sin(glm::radians(spacecraftDir + 180.0f));
 			motionState = "left";
 		}
-		if (!tigerDash && (key == GLFW_KEY_RIGHT || key == GLFW_KEY_D) && action == GLFW_PRESS) {
+		if (!spacecraftDash && (key == GLFW_KEY_RIGHT || key == GLFW_KEY_D) && action == GLFW_PRESS) {
 			spacecraftPosX += 0.5f * cos(glm::radians(spacecraftDir));
 			spacecraftPosZ += -0.5f * sin(glm::radians(spacecraftDir));
 			motionState = "right";
 		}
 		/*
-		if (!tigerDash && key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+		if (!spacecraftDash && key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
 			spacecraftPosY += 0.5f;
 			motionState = "up";
 		}
-		if (!tigerDash && key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS) {
+		if (!spacecraftDash && key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS) {
 			spacecraftPosY -= 0.5f;
 			motionState = "down";
 		}
 		*/
 		//	REPEAT
 
-		if (!tigerDash && (key == GLFW_KEY_UP || key == GLFW_KEY_W) && action == GLFW_REPEAT) {
+		if (!spacecraftDash && (key == GLFW_KEY_UP || key == GLFW_KEY_W) && action == GLFW_REPEAT) {
 			spacecraftPosX += 1.8f * cos(glm::radians(spacecraftDir + 90.0f));
 			spacecraftPosZ += -1.8f * sin(glm::radians(spacecraftDir + 90.0f));
 			movementDetected = true;
 			motionState = "front";
 		}
-		if (!tigerDash && (key == GLFW_KEY_DOWN || key == GLFW_KEY_S) && action == GLFW_REPEAT) {
+		if (!spacecraftDash && (key == GLFW_KEY_DOWN || key == GLFW_KEY_S) && action == GLFW_REPEAT) {
 			spacecraftPosX += -1.0f * cos(glm::radians(spacecraftDir + 90.0f));
 			spacecraftPosZ += 1.0f * sin(glm::radians(spacecraftDir + 90.0f));
 			movementDetected = true;
 			motionState = "back";
 		}
-		if (!tigerDash && (key == GLFW_KEY_LEFT || key == GLFW_KEY_A) && action == GLFW_REPEAT) {
+		if (!spacecraftDash && (key == GLFW_KEY_LEFT || key == GLFW_KEY_A) && action == GLFW_REPEAT) {
 			spacecraftPosX += 1.0f * cos(glm::radians(spacecraftDir + 180.0f));
 			spacecraftPosZ += -1.0f * sin(glm::radians(spacecraftDir + 180.0f));
 			motionState = "left";
 		}
-		if (!tigerDash && (key == GLFW_KEY_RIGHT || key == GLFW_KEY_D) && action == GLFW_REPEAT) {
+		if (!spacecraftDash && (key == GLFW_KEY_RIGHT || key == GLFW_KEY_D) && action == GLFW_REPEAT) {
 			spacecraftPosX += 1.0f * cos(glm::radians(spacecraftDir));
 			spacecraftPosZ += -1.0f * sin(glm::radians(spacecraftDir));
 			motionState = "right";
 		}
 		/*
-		if (!tigerDash && key == GLFW_KEY_SPACE && action == GLFW_REPEAT) {
+		if (!spacecraftDash && key == GLFW_KEY_SPACE && action == GLFW_REPEAT) {
 			spacecraftPosY += 1.0f;
 			motionState = "up";
 		}
-		if (!tigerDash && key == GLFW_KEY_LEFT_SHIFT && action == GLFW_REPEAT) {
+		if (!spacecraftDash && key == GLFW_KEY_LEFT_SHIFT && action == GLFW_REPEAT) {
 			spacecraftPosY -= 1.0f;
 			motionState = "down";
 		}
